@@ -4,19 +4,63 @@ Collaboration entre Ben et Dan.
 
 ## C'est quoi ?
 
-Une application mobile de révision pour les élèves de Seconde. L'IA génère des quiz personnalisés alignés avec le programme scolaire officiel, couvrant toutes les matières : Mathématiques, Français, Histoire, Géographie, SES, SVT, Physique-chimie, SNT, EMC, Anglais, Espagnol et Allemand.
+Une application web de révision pour les élèves de Seconde. L'IA génère des quiz personnalisés alignés avec le programme scolaire officiel, couvrant toutes les matières : Mathématiques, Français, Histoire-Géographie, SES, SVT, Physique-chimie, SNT, EMC, Anglais, Espagnol et Allemand.
 
 ## Comment ça marche ?
 
-L'élève choisit une matière, puis un chapitre, et l'IA génère des questions (QCM, Vrai/Faux, Réponse courte). Chaque réponse est corrigée immédiatement avec une explication. Un score final est affiché à la fin du quiz.
+1. L'élève choisit une matière
+2. Il sélectionne un chapitre
+3. L'IA génère des questions (QCM, Vrai/Faux, Réponse courte)
+4. Chaque réponse est corrigée immédiatement avec une explication
+5. Un score final est affiché à la fin du quiz
 
-## Fonctionnalités clés
+## Fonctionnalités
 
-- Quiz générés dynamiquement par IA
-- Correction immédiate avec explication
-- Suivi de progression et statistiques
-- Adaptation de la difficulté selon les performances
-- Système de streak et gamification (XP, badges, niveaux)
-- Mode contrôle (temps limité, notation réaliste)
-- Coach IA pour des explications personnalisées
-- Mode parent / professeur pour suivre les élèves
+- Quiz générés dynamiquement par Claude (Anthropic)
+- Correction immédiate avec explication détaillée
+- Toutes les matières du programme officiel de Seconde
+- Interface responsive (mobile & desktop)
+- Mode mock pour tester sans clé API
+
+## Stack technique
+
+- **Framework** : Next.js 15 (App Router)
+- **Langage** : TypeScript
+- **Style** : Tailwind CSS
+- **IA** : Claude API (Anthropic)
+- **Validation** : Zod
+- **Tests E2E** : Playwright
+
+## Structure du projet
+
+```
+projet-Ben-Dan/
+└── quiz-app/          # Application Next.js
+    ├── src/
+    │   ├── app/       # Pages et routes API
+    │   ├── components/# Composants React
+    │   ├── data/      # Programme scolaire (matières & chapitres)
+    │   ├── lib/       # Utilitaires, schémas, constantes
+    │   └── types/     # Types TypeScript
+    └── tests/
+        └── e2e/       # Tests Playwright
+```
+
+## Installation
+
+```bash
+cd quiz-app
+npm install
+cp .env.example .env.local
+# Ajouter ANTHROPIC_API_KEY dans .env.local
+npm run dev
+```
+
+L'application est disponible sur `http://localhost:3000`.
+
+## Variables d'environnement
+
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | Clé API Anthropic (requise en production) |
+| `NEXT_PUBLIC_USE_MOCK` | `true` pour utiliser les données mock (dev) |
