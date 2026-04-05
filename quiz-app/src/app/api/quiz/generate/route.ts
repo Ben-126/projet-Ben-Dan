@@ -129,17 +129,17 @@ Réponds UNIQUEMENT avec un JSON valide, sans texte avant ou après :
         throw new Error("Réponse IA non conforme au schéma attendu");
       }
 
-      return NextResponse.json(validated.data);
+      return NextResponse.json(validated.data, { headers: { "Cache-Control": "no-store" } });
     } catch (err: unknown) {
       // Log serveur uniquement, jamais exposé au client
       if (process.env.NODE_ENV !== "production") {
         console.error("[quiz/generate] Erreur Anthropic, fallback mock:", err);
       }
       const questions = genererQuizMock(matiereSlug, chapitreSlug);
-      return NextResponse.json({ questions });
+      return NextResponse.json({ questions }, { headers: { "Cache-Control": "no-store" } });
     }
   }
 
   const questions = genererQuizMock(matiereSlug, chapitreSlug);
-  return NextResponse.json({ questions });
+  return NextResponse.json({ questions }, { headers: { "Cache-Control": "no-store" } });
 }

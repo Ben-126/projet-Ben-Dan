@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
             "font-src 'self' https://fonts.gstatic.com",
             "img-src 'self' data:",
             "connect-src 'self'",
+            "frame-ancestors 'none'",
           ].join("; "),
         },
       ],

@@ -78,6 +78,7 @@ export default function QuestionCard({ question, index, total, onAnswer, disable
             type="text"
             placeholder="Votre réponse..."
             disabled={disabled}
+            maxLength={200}
             className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-indigo-400 focus:outline-none text-sm transition-colors disabled:opacity-50"
             autoComplete="off"
           />
