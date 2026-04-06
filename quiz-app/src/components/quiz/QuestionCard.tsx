@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { Question } from "@/types";
 import MathKeyboard from "./MathKeyboard";
 
@@ -8,14 +8,54 @@ interface QuestionCardProps {
   index: number;
   total: number;
   onAnswer: (reponse: string | boolean) => void;
+  onTimeUp?: () => void;
   disabled: boolean;
   showMathKeyboard?: boolean;
+  tempsMaxMs?: number;
 }
 
-export default function QuestionCard({ question, index, total, onAnswer, disabled, showMathKeyboard = false }: QuestionCardProps) {
+export const TEMPS_MAX_PAR_TYPE: Record<Question["type"], number> = {
+  qcm: 30_000,
+  vrai_faux: 15_000,
+  reponse_courte: 60_000,
+};
+
+export default function QuestionCard({
+  question,
+  index,
+  total,
+  onAnswer,
+  onTimeUp,
+  disabled,
+  showMathKeyboard = false,
+  tempsMaxMs,
+}: QuestionCardProps) {
   const [valeur, setValeur] = useState("");
   const [clavierOuvert, setClavierOuvert] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const maxMs = tempsMaxMs ?? TEMPS_MAX_PAR_TYPE[question.type];
+  const [tempsRestantMs, setTempsRestantMs] = useState(maxMs);
+
+  useEffect(() => {
+    setTempsRestantMs(maxMs);
+    if (disabled) return;
+    const debut = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - debut;
+      const restant = Math.max(0, maxMs - elapsed);
+      setTempsRestantMs(restant);
+      if (restant === 0) {
+        clearInterval(interval);
+        onTimeUp?.();
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [question, maxMs, disabled, onTimeUp]);
+
+  const tempsRestantSec = Math.ceil(tempsRestantMs / 1000);
+  const ratioRestant = tempsRestantMs / maxMs;
+  const couleurTimer =
+    ratioRestant > 0.5 ? "bg-green-500" : ratioRestant > 0.25 ? "bg-yellow-500" : "bg-red-500";
 
   const insererSymbole = (symbole: string) => {
     const input = inputRef.current;
@@ -43,7 +83,21 @@ export default function QuestionCard({ question, index, total, onAnswer, disable
             style={{ width: `${((index + 1) / total) * 100}%` }}
           />
         </div>
+        {!disabled && (
+          <span className={`text-xs font-bold tabular-nums px-2 py-0.5 rounded-full text-white ${couleurTimer}`}>
+            {tempsRestantSec}s
+          </span>
+        )}
       </div>
+
+      {!disabled && (
+        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className={`h-full ${couleurTimer} rounded-full transition-all duration-100`}
+            style={{ width: `${ratioRestant * 100}%` }}
+          />
+        </div>
+      )}
 
       <p className="text-gray-800 font-medium text-base leading-relaxed" data-testid="question-texte">
         {question.question}

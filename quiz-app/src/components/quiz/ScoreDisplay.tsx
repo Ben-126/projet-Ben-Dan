@@ -3,7 +3,7 @@ import Link from "next/link";
 
 interface ScoreDisplayProps {
   score: number;
-  total: number;
+  maxScore: number;
   matiereSlug: string;
   chapitreSlug: string;
   questionsRatees?: string[];
@@ -14,14 +14,14 @@ interface ScoreDisplayProps {
 
 export default function ScoreDisplay({
   score,
-  total,
+  maxScore,
   matiereSlug,
   questionsRatees = [],
   modeRevision = false,
   onRecommencer,
   onReviserErreurs,
 }: ScoreDisplayProps) {
-  const pourcentage = Math.round((score / total) * 100);
+  const pourcentage = Math.round((score / maxScore) * 100);
 
   const getMessage = () => {
     if (pourcentage >= 80) return { texte: "Excellent travail ! Tu maîtrises ce chapitre.", emoji: "🏆" };
@@ -45,9 +45,9 @@ export default function ScoreDisplay({
 
       <div>
         <p className="text-5xl font-bold text-gray-800" data-testid="score-valeur">
-          {score}<span className="text-3xl text-gray-400">/{total}</span>
+          {pourcentage}<span className="text-3xl text-gray-400">%</span>
         </p>
-        <p className="text-lg text-gray-500 mt-1" data-testid="score-pourcentage">{pourcentage}%</p>
+        <p className="text-sm text-gray-400 mt-1" data-testid="score-points">{score} pts sur {maxScore}</p>
       </div>
 
       <div className="w-full h-4 bg-gray-100 rounded-full overflow-hidden">

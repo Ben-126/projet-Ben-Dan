@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { Question, ReponseUtilisateur } from "@/types";
-import QuestionCard from "./QuestionCard";
+import QuestionCard, { TEMPS_MAX_PAR_TYPE } from "./QuestionCard";
 import CorrectionDisplay from "./CorrectionDisplay";
 import ScoreDisplay from "./ScoreDisplay";
 import {
@@ -62,6 +62,7 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre }:
   const [erreur, setErreur] = useState<string | null>(null);
   const [niveau, setNiveau] = useState<NiveauDifficulte>("intermediaire");
   const [modeRevision, setModeRevision] = useState<ModeRevision>({ actif: false, questionsRatees: [] });
+  const debutQuestionRef = useRef<number>(0);
 
   const chargerQuiz = useCallback(async (revisionConfig?: ModeRevision) => {
     setEtat("chargement");
@@ -92,6 +93,7 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre }:
 
       const data = await res.json();
       setQuestions(data.questions);
+      debutQuestionRef.current = Date.now();
       setEtat("question");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erreur inconnue";
@@ -105,9 +107,33 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre }:
     chargerQuiz();
   }, [chargerQuiz]);
 
+  function calculerPoints(correcte: boolean, elapsedMs: number, tempsMaxMs: number): number {
+    if (!correcte) return 0;
+    const ratio = Math.max(0, 1 - elapsedMs / tempsMaxMs);
+    return Math.round(40 + ratio * 60);
+  }
+
+  const handleTimeUp = () => {
+    if (etat !== "question") return;
+    const question = questions[questionIndex];
+    const tempsMaxMs = TEMPS_MAX_PAR_TYPE[question.type];
+    const nouvelleReponse: ReponseUtilisateur = {
+      questionIndex,
+      reponse: "",
+      correcte: false,
+      tempsMs: tempsMaxMs,
+      pointsObtenus: 0,
+    };
+    setReponses((prev) => [...prev, nouvelleReponse]);
+    setDerniereReponse({ reponse: "", correcte: false });
+    setEtat("correction");
+  };
+
   const handleReponse = async (reponse: string | boolean) => {
     if (etat !== "question") return;
     const question = questions[questionIndex];
+    const elapsedMs = Date.now() - debutQuestionRef.current;
+    const tempsMaxMs = TEMPS_MAX_PAR_TYPE[question.type];
 
     if (question.type === "reponse_courte") {
       setEtat("verification");
@@ -134,13 +160,15 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre }:
           correcte = verifierReponseLocale(question, reponse);
         }
 
-        const nouvelleReponse: ReponseUtilisateur = { questionIndex, reponse, correcte };
+        const points = calculerPoints(correcte, elapsedMs, tempsMaxMs);
+        const nouvelleReponse: ReponseUtilisateur = { questionIndex, reponse, correcte, tempsMs: elapsedMs, pointsObtenus: points };
         setReponses((prev) => [...prev, nouvelleReponse]);
         setDerniereReponse({ reponse, correcte, feedback });
         setEtat("correction");
       } catch {
         const correcte = verifierReponseLocale(question, reponse);
-        const nouvelleReponse: ReponseUtilisateur = { questionIndex, reponse, correcte };
+        const points = calculerPoints(correcte, elapsedMs, tempsMaxMs);
+        const nouvelleReponse: ReponseUtilisateur = { questionIndex, reponse, correcte, tempsMs: elapsedMs, pointsObtenus: points };
         setReponses((prev) => [...prev, nouvelleReponse]);
         setDerniereReponse({ reponse, correcte });
         setEtat("correction");
@@ -149,15 +177,18 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre }:
     }
 
     const correcte = verifierReponseLocale(question, reponse);
-    const nouvelleReponse: ReponseUtilisateur = { questionIndex, reponse, correcte };
+    const points = calculerPoints(correcte, elapsedMs, tempsMaxMs);
+    const nouvelleReponse: ReponseUtilisateur = { questionIndex, reponse, correcte, tempsMs: elapsedMs, pointsObtenus: points };
     setReponses((prev) => [...prev, nouvelleReponse]);
     setDerniereReponse({ reponse, correcte });
     setEtat("correction");
+    debutQuestionRef.current = Date.now();
   };
 
   const handleTerminer = useCallback((reponsesFinales: ReponseUtilisateur[]) => {
-    const score = reponsesFinales.filter((r) => r.correcte).length;
-    const pourcentage = Math.round((score / questions.length) * 100);
+    const totalPoints = reponsesFinales.reduce((sum, r) => sum + r.pointsObtenus, 0);
+    const maxPoints = questions.length * 100;
+    const pourcentage = Math.round((totalPoints / maxPoints) * 100);
     const ratees = reponsesFinales
       .filter((r) => !r.correcte)
       .map((r) => questions[r.questionIndex]?.question ?? "")
@@ -173,11 +204,13 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre }:
     } else {
       setQuestionIndex((i) => i + 1);
       setDerniereReponse(null);
+      debutQuestionRef.current = Date.now();
       setEtat("question");
     }
   };
 
-  const score = reponses.filter((r) => r.correcte).length;
+  const score = reponses.reduce((sum, r) => sum + r.pointsObtenus, 0);
+  const maxScore = questions.length * 100;
   const showMathKeyboard = MATIERES_AVEC_CLAVIER_MATH.has(matiereSlug);
 
   const etiquetteNiveau = niveau === "debutant" ? "Débutant" : niveau === "avance" ? "Avancé" : null;
@@ -225,7 +258,7 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre }:
     return (
       <ScoreDisplay
         score={score}
-        total={questions.length}
+        maxScore={maxScore}
         matiereSlug={matiereSlug}
         chapitreSlug={chapitreSlug}
         questionsRatees={questionsRateesQuiz}
@@ -272,6 +305,7 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre }:
           index={questionIndex}
           total={questions.length}
           onAnswer={handleReponse}
+          onTimeUp={handleTimeUp}
           disabled={false}
           showMathKeyboard={showMathKeyboard}
         />

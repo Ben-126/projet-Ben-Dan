@@ -53,6 +53,8 @@ export interface ReponseUtilisateur {
   questionIndex: number;
   reponse: string | boolean;
   correcte: boolean;
+  tempsMs: number;
+  pointsObtenus: number; // 0-100
 }
 
 export interface ResultatQuiz {
