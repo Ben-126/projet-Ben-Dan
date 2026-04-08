@@ -83,10 +83,11 @@ Rendu :
 - Si `scoreMoyen >= 80` : badge 🟢 vert + barre verte
 
 ### `GraphiqueEvolution`
-Props : `{ scores: { score: number, date: string }[] }`
+Props : `{ entrees: EntreeHistorique[] }` (filtrées par chapitre depuis `quiz-history`)
 
-Recharts `LineChart` responsive, affiche les 5 derniers scores du chapitre sélectionné.
-Axe Y : 0–100, axe X : dates courtes.
+Recharts `LineChart` responsive, affiche les 5 dernières entrées du chapitre sélectionné.
+Axe Y : 0–100, axe X : dates courtes (dd/mm).
+Source de données : `quiz-history` filtré par `chapitreSlug`, pas `derniersScores` (qui n'a pas de dates).
 
 ### `GraphiqueChapitres`
 Props : `{ chapitres: { nom: string, scoreMoyen: number | null }[] }`
@@ -115,7 +116,7 @@ Calcule depuis `quiz-performances` :
 Structure :
 1. **Filtre niveau** — tabs Seconde / Première / Terminale
 2. **Résumé global** — total quiz complétés + score moyen toutes matières
-3. **Section par matière** — sélecteur matière + `StatsMatiere` + `GraphiqueChapitres` + `GraphiqueEvolution` (chapitre sélectionné)
+3. **Section par matière** — sélecteur matière + `StatsMatiere` + `GraphiqueChapitres` + `GraphiqueEvolution` (chapitre sélectionné par clic sur une barre, ou premier chapitre avec données par défaut)
 4. **Historique récent** — `HistoriqueQuiz` sans filtre, 20 dernières entrées
 
 ---
@@ -140,3 +141,27 @@ Structure :
 - Composants graphiques marqués `"use client"`
 - Si localStorage vide (premier usage), la page `/progression` affiche un état vide encourageant
 - Pas de modification du schéma `quiz-performances` existant
+
+---
+
+## Optimisations client (obligatoires)
+
+### Hydratation Next.js
+- Recharts chargé via `dynamic(() => import('recharts'), { ssr: false })` pour éviter les erreurs d'hydratation (Recharts utilise `window`)
+- Tous les accès localStorage dans `useEffect` ou gardés par `typeof window !== "undefined"`
+
+### Zéro layout shift
+- Les `ChapitreCard` ont une hauteur fixe même sans données de progression — `IndicateurMaitrise` affiche un skeleton discret (`animate-pulse`) pendant l'hydratation côté client
+
+### Animations
+- Recharts : animations activées (`isAnimationActive={true}`) pour les graphiques — effet d'apparition fluide au premier rendu
+- Barre de progression dans `IndicateurMaitrise` : transition CSS `duration-700` pour l'animation de remplissage
+
+### Mobile-first
+- Tous les graphiques Recharts dans un `ResponsiveContainer` (largeur 100%, hauteur fixe 200px)
+- `HistoriqueQuiz` : liste compacte, lisible sur petit écran
+- Page `/progression` : layout colonne sur mobile, 2 colonnes sur desktop pour les graphiques
+
+### État vide soigné
+- Page `/progression` vide : illustration + message "Lance ton premier quiz pour voir ta progression ici 🚀" + bouton vers la page d'accueil
+- `ChapitreCard` sans données : badge ⚪ sobre, pas d'espace vide visible
