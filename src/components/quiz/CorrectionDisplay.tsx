@@ -1,5 +1,6 @@
 "use client";
 import type { Question } from "@/types";
+import ExplicationAvancee from "./ExplicationAvancee";
 
 interface CorrectionDisplayProps {
   question: Question;
@@ -84,6 +85,11 @@ export default function CorrectionDisplay({
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Explication</p>
         <p className="text-sm text-gray-700 leading-relaxed">{question.explication}</p>
       </div>
+
+      <ExplicationAvancee
+        explicationAvancee={question.explicationAvancee}
+        defaultExpanded={!correcte}
+      />
 
       <button
         onClick={onSuivant}

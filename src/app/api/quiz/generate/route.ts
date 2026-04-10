@@ -3,7 +3,7 @@ import { z } from "zod";
 import { genererQuizMock } from "@/lib/mock-quiz";
 import { getMatiereBySlugAndNiveau, type Niveau } from "@/data/programmes";
 import { QuizSchema } from "@/lib/quiz-schema";
-import { QUESTIONS_PAR_QUIZ } from "@/lib/constants";
+import { QUESTIONS_PAR_QUIZ, MAX_TOKENS_GENERATION } from "@/lib/constants";
 
 const RequestSchema = z.object({
   matiereSlug: z.string().min(1).max(100),
@@ -89,6 +89,16 @@ export async function POST(req: NextRequest) {
         ? `\nCONTEXTE RÉVISION : L'élève a eu des difficultés sur ces questions lors du quiz précédent :\n${questionsRatees.map((q, i) => `${i + 1}. ${q}`).join("\n")}\nConçois des questions qui renforcent la compréhension de ces notions spécifiques.`
         : "";
 
+      const matieresAvecEtapes = new Set(["mathematiques", "physique-chimie", "svt", "snt", "sciences-numeriques-et-technologie"]);
+      const avecEtapes = matieresAvecEtapes.has(matiereSlug);
+
+      const instructionExplicationAvancee = avecEtapes
+        ? `- "explicationAvancee" est OBLIGATOIRE pour cette matière. Remplis les 3 champs :
+  * "etapes" : liste ordonnée de 2 à 5 étapes de résolution claires et concises
+  * "methode" : nom de la méthode ou technique utilisée (ex. "Identité remarquable", "Tableau de signes")
+  * "erreurs_frequentes" : 2 à 3 erreurs classiques que font les élèves sur ce type de question`
+        : `- "explicationAvancee" est optionnel. Si pertinent, tu peux ajouter "erreurs_frequentes" (2-3 erreurs courantes).`;
+
       const prompt = `Tu es un professeur expert pour la classe de ${niveauLabel} en France.
 Génère exactement ${QUESTIONS_PAR_QUIZ} questions de quiz sur le chapitre suivant :
 - Matière : ${matiere.nom}
@@ -98,41 +108,64 @@ Génère exactement ${QUESTIONS_PAR_QUIZ} questions de quiz sur le chapitre suiv
 Niveau de difficulté : ${niveauInstruction}${revisionInstruction}
 
 Génère un mélange de types : QCM (4 options), Vrai/Faux, et Réponse courte.
-Les questions doivent être précises, pédagogiquement correctes et adaptées au niveau Seconde.
+Les questions doivent être précises, pédagogiquement correctes et adaptées au niveau ${niveauLabel}.
 
 RÈGLES IMPORTANTES :
 - Pour les QCM : "reponseCorrecte" doit être EXACTEMENT le texte complet de l'une des options (jamais une lettre comme A, B, C ou D).
 - Pour les réponses courtes : "reponseCorrecte" doit être la réponse canonique courte et précise (1 à 5 mots).
 - Les 4 options d'un QCM doivent être distinctes et réalistes.
+- "explication" : résumé clair en 1 à 3 phrases.
+${instructionExplicationAvancee}
 
 Réponds UNIQUEMENT avec un JSON valide, sans texte avant ou après :
 {
   "questions": [
     {
       "type": "qcm",
-      "question": "Quelle est la formule de l'eau ?",
-      "options": ["CO2", "H2O", "NaCl", "O2"],
-      "reponseCorrecte": "H2O",
-      "explication": "L'eau est composée de 2 atomes d'hydrogène et 1 atome d'oxygène."
+      "question": "Développer (x + 3)(x - 3) donne :",
+      "options": ["x² + 9", "x² - 9", "x² + 6x + 9", "x² - 6x + 9"],
+      "reponseCorrecte": "x² - 9",
+      "explication": "On utilise l'identité (a+b)(a-b) = a²-b². Ici a=x, b=3, donc x²-9.",
+      "explicationAvancee": {
+        "etapes": [
+          "Identifier la forme (a+b)(a-b) avec a=x et b=3",
+          "Appliquer l'identité remarquable : (a+b)(a-b) = a²-b²",
+          "Calculer : x² - 3² = x² - 9"
+        ],
+        "methode": "Identité remarquable (différence de deux carrés)",
+        "erreurs_frequentes": [
+          "Développer terme à terme au lieu d'utiliser l'identité",
+          "Oublier le signe moins : écrire x²+9 au lieu de x²-9",
+          "Confondre avec (x+3)² = x²+6x+9"
+        ]
+      }
     },
     {
       "type": "vrai_faux",
       "question": "...",
       "reponseCorrecte": true,
-      "explication": "..."
+      "explication": "...",
+      "explicationAvancee": {
+        "erreurs_frequentes": ["..."]
+      }
     },
     {
       "type": "reponse_courte",
       "question": "...",
       "reponseCorrecte": "...",
-      "explication": "..."
+      "explication": "...",
+      "explicationAvancee": {
+        "etapes": ["...", "..."],
+        "methode": "...",
+        "erreurs_frequentes": ["...", "..."]
+      }
     }
   ]
 }`;
 
       const completion = await client.chat.completions.create({
         model: "gpt-4o-mini",
-        max_tokens: 2048,
+        max_tokens: MAX_TOKENS_GENERATION,
         messages: [{ role: "user", content: prompt }],
       });
 

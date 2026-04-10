@@ -12,18 +12,55 @@ const BANQUE: BanqueQuestions = {
         options: ["]-2 ; 5[", "[-2 ; 5[", "[-2 ; 5]", "]-2 ; 5]"],
         reponseCorrecte: "[-2 ; 5[",
         explication: "La notation [-2 ; 5[ indique que -2 est inclus (crochet fermé) et 5 est exclu (crochet ouvert).",
+        explicationAvancee: {
+          etapes: [
+            "Repérer la condition : -2 ≤ x signifie -2 est inclus → crochet fermé [",
+            "Repérer la condition : x < 5 signifie 5 est exclu → crochet ouvert [",
+            "Assembler : [-2 ; 5[",
+          ],
+          methode: "Lecture des inégalités et notation d'intervalles",
+          erreurs_frequentes: [
+            "Confondre crochet fermé et ouvert selon le sens de l'inégalité (≤ vs <)",
+            "Inverser les crochets : écrire ]-2 ; 5] au lieu de [-2 ; 5[",
+          ],
+        },
       },
       {
         type: "vrai_faux",
         question: "(a + b)² = a² + b² est une identité remarquable correcte.",
         reponseCorrecte: false,
         explication: "C'est faux. La formule correcte est (a + b)² = a² + 2ab + b². Le terme 2ab est souvent oublié.",
+        explicationAvancee: {
+          etapes: [
+            "Développer (a + b)² = (a + b)(a + b)",
+            "Multiplier : a×a + a×b + b×a + b×b",
+            "Simplifier : a² + 2ab + b²",
+          ],
+          methode: "Identité remarquable (carré d'une somme)",
+          erreurs_frequentes: [
+            "Oublier le terme central 2ab → écrire a² + b² au lieu de a² + 2ab + b²",
+            "Confondre (a+b)² avec (a+b)(a-b) = a²-b²",
+          ],
+        },
       },
       {
         type: "reponse_courte",
         question: "Développez et simplifiez : (x + 3)(x - 3)",
         reponseCorrecte: "x² - 9",
         explication: "On utilise l'identité (a + b)(a - b) = a² - b². Ici a = x et b = 3, donc on obtient x² - 9.",
+        explicationAvancee: {
+          etapes: [
+            "Identifier la forme (a + b)(a - b) avec a = x et b = 3",
+            "Appliquer l'identité remarquable : (a + b)(a - b) = a² - b²",
+            "Calculer : x² - 3² = x² - 9",
+          ],
+          methode: "Identité remarquable (différence de deux carrés)",
+          erreurs_frequentes: [
+            "Développer terme à terme au lieu d'utiliser l'identité remarquable",
+            "Oublier le signe moins : écrire x² + 9 au lieu de x² - 9",
+            "Confondre avec (x + 3)² = x² + 6x + 9",
+          ],
+        },
       },
       {
         type: "qcm",

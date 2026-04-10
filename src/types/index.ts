@@ -19,12 +19,19 @@ export interface Matiere {
 
 export type TypeQuestion = "qcm" | "vrai_faux" | "reponse_courte";
 
+export interface ExplicationAvancee {
+  etapes?: string[];
+  methode?: string;
+  erreurs_frequentes?: string[];
+}
+
 export interface QuestionQCM {
   type: "qcm";
   question: string;
   options: string[];
   reponseCorrecte: string;
   explication: string;
+  explicationAvancee?: ExplicationAvancee;
 }
 
 export interface QuestionVraiFaux {
@@ -32,6 +39,7 @@ export interface QuestionVraiFaux {
   question: string;
   reponseCorrecte: boolean;
   explication: string;
+  explicationAvancee?: ExplicationAvancee;
 }
 
 export interface QuestionReponseCourte {
@@ -39,6 +47,7 @@ export interface QuestionReponseCourte {
   question: string;
   reponseCorrecte: string;
   explication: string;
+  explicationAvancee?: ExplicationAvancee;
 }
 
 export type Question = QuestionQCM | QuestionVraiFaux | QuestionReponseCourte;
