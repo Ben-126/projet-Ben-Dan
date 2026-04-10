@@ -3,7 +3,7 @@ import { z } from "zod";
 import { genererQuizMock } from "@/lib/mock-quiz";
 import { getMatiereBySlugAndNiveau, type Niveau } from "@/data/programmes";
 import { QuizSchema } from "@/lib/quiz-schema";
-import { QUESTIONS_PAR_QUIZ, MAX_TOKENS_GENERATION } from "@/lib/constants";
+import { MAX_TOKENS_GENERATION } from "@/lib/constants";
 
 const RequestSchema = z.object({
   matiereSlug: z.string().min(1).max(100),
@@ -11,6 +11,7 @@ const RequestSchema = z.object({
   niveauLycee: z.enum(["seconde", "premiere", "terminale"]).optional().default("seconde"),
   niveau: z.enum(["debutant", "intermediaire", "avance"]).optional(),
   questionsRatees: z.array(z.string().max(500)).max(10).optional(),
+  questionsParQuiz: z.union([z.literal(3), z.literal(5), z.literal(10)]).optional().default(5),
 });
 
 const rateLimit = new Map<string, { count: number; resetAt: number }>();
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Paramètres invalides." }, { status: 400 });
   }
 
-  const { matiereSlug, chapitreSlug, niveauLycee, niveau, questionsRatees } = parsed.data;
+  const { matiereSlug, chapitreSlug, niveauLycee, niveau, questionsRatees, questionsParQuiz } = parsed.data;
 
   const matiere = getMatiereBySlugAndNiveau(niveauLycee as Niveau, matiereSlug);
   if (!matiere) {
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
         : `- "explicationAvancee" est optionnel. Si pertinent, tu peux ajouter "erreurs_frequentes" (2-3 erreurs courantes).`;
 
       const prompt = `Tu es un professeur expert pour la classe de ${niveauLabel} en France.
-Génère exactement ${QUESTIONS_PAR_QUIZ} questions de quiz sur le chapitre suivant :
+Génère exactement ${questionsParQuiz} questions de quiz sur le chapitre suivant :
 - Matière : ${matiere.nom}
 - Chapitre : ${chapitre.titre}
 - Compétences ciblées : ${competences}

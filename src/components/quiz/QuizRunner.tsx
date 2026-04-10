@@ -10,6 +10,7 @@ import {
   sauvegarderPerformance,
   type NiveauDifficulte,
 } from "@/lib/performance";
+import { getParametres } from "@/lib/parametres";
 
 type EtatQuiz = "chargement" | "question" | "verification" | "correction" | "termine" | "erreur";
 
@@ -76,8 +77,9 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
     const performance = getPerformance(matiereSlug, chapitreSlug);
     const niveauActuel = getNiveau(performance);
     setNiveau(niveauActuel);
+    const { questionsParQuiz } = getParametres();
 
-    const body: Record<string, unknown> = { matiereSlug, chapitreSlug, niveau: niveauActuel, niveauLycee };
+    const body: Record<string, unknown> = { matiereSlug, chapitreSlug, niveau: niveauActuel, niveauLycee, questionsParQuiz };
     if (revisionConfig?.actif && revisionConfig.questionsRatees.length > 0) {
       body.questionsRatees = revisionConfig.questionsRatees;
     }
