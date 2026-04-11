@@ -1,5 +1,5 @@
 "use client";
-import type { Question, NiveauCorrection } from "@/types";
+import type { Question, NiveauCorrection, FeedbackDetaille } from "@/types";
 import { getParametres } from "@/lib/parametres";
 import ExplicationAvancee from "./ExplicationAvancee";
 
@@ -9,6 +9,7 @@ interface CorrectionDisplayProps {
   correcte: boolean;
   niveauCorrection: NiveauCorrection;
   feedback?: string;
+  feedbackDetaille?: FeedbackDetaille;
   onSuivant: () => void;
   estDerniere: boolean;
 }
@@ -69,6 +70,7 @@ export default function CorrectionDisplay({
   correcte,
   niveauCorrection,
   feedback,
+  feedbackDetaille,
   onSuivant,
   estDerniere,
 }: CorrectionDisplayProps) {
@@ -106,7 +108,48 @@ export default function CorrectionDisplay({
         </div>
       </div>
 
-      {feedback && question.type === "reponse_courte" && niveauCorrection !== "correct" && (
+      {question.type === "reponse_courte" && niveauCorrection !== "correct" && feedbackDetaille && (
+        <div className={`rounded-xl border overflow-hidden ${
+          niveauCorrection === "partiel" ? "border-yellow-300" : "border-orange-200"
+        }`}>
+          {feedbackDetaille.pointsPositifs && (
+            <div className="flex gap-2 px-3 py-2 bg-green-50 border-b border-green-100">
+              <span className="text-green-500 text-sm mt-0.5 shrink-0">✓</span>
+              <div>
+                <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-0.5">Ce qui est correct</p>
+                <p className="text-sm text-green-900">{feedbackDetaille.pointsPositifs}</p>
+              </div>
+            </div>
+          )}
+          {feedbackDetaille.pointsManquants && (
+            <div className={`flex gap-2 px-3 py-2 border-b ${
+              niveauCorrection === "partiel" ? "bg-yellow-50 border-yellow-100" : "bg-orange-50 border-orange-100"
+            }`}>
+              <span className={`text-sm mt-0.5 shrink-0 ${niveauCorrection === "partiel" ? "text-yellow-500" : "text-orange-500"}`}>!</span>
+              <div>
+                <p className={`text-xs font-semibold uppercase tracking-wide mb-0.5 ${
+                  niveauCorrection === "partiel" ? "text-yellow-700" : "text-orange-700"
+                }`}>Ce qui manque</p>
+                <p className={`text-sm ${niveauCorrection === "partiel" ? "text-yellow-900" : "text-orange-900"}`}>{feedbackDetaille.pointsManquants}</p>
+              </div>
+            </div>
+          )}
+          {feedbackDetaille.pourquoi && (
+            <div className={`flex gap-2 px-3 py-2 ${
+              niveauCorrection === "partiel" ? "bg-yellow-100" : "bg-orange-100"
+            }`}>
+              <span className={`text-sm mt-0.5 shrink-0 ${niveauCorrection === "partiel" ? "text-yellow-600" : "text-orange-600"}`}>?</span>
+              <div>
+                <p className={`text-xs font-semibold uppercase tracking-wide mb-0.5 ${
+                  niveauCorrection === "partiel" ? "text-yellow-700" : "text-orange-700"
+                }`}>Pourquoi</p>
+                <p className={`text-sm ${niveauCorrection === "partiel" ? "text-yellow-900" : "text-orange-900"}`}>{feedbackDetaille.pourquoi}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {question.type === "reponse_courte" && niveauCorrection !== "correct" && !feedbackDetaille && feedback && (
         <div className={`rounded-xl p-3 border ${
           niveauCorrection === "partiel"
             ? "bg-yellow-100 border-yellow-300"

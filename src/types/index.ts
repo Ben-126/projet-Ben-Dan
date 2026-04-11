@@ -60,6 +60,12 @@ export interface Quiz {
 
 export type NiveauCorrection = "correct" | "partiel" | "incorrect";
 
+export interface FeedbackDetaille {
+  pointsPositifs?: string;   // Ce qui est correct dans la réponse
+  pointsManquants?: string;  // Ce qui manque ou est inexact
+  pourquoi?: string;         // Pourquoi c'est faux, lié à la réponse de l'élève
+}
+
 export interface ReponseUtilisateur {
   questionIndex: number;
   reponse: string | boolean;

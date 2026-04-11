@@ -71,25 +71,42 @@ Réponse de l'élève : ${reponseUser}
 Sois tolérant sur : les fautes d'orthographe mineures, les synonymes exacts.
 Sois strict sur : le sens général, les concepts clés, les valeurs numériques.
 
-Réponds UNIQUEMENT avec du JSON valide :
+Réponds UNIQUEMENT avec du JSON valide.
+
+Pour "correct" :
 {
   "niveauCorrection": "correct",
-  "feedback": "Très bien, tu as identifié le bon concept."
+  "feedback": "Très bien !",
+  "feedbackDetaille": {}
 }
-ou
+
+Pour "partiel" :
 {
   "niveauCorrection": "partiel",
-  "feedback": "L'idée est juste mais il manque la précision sur Y."
+  "feedback": "Partiellement correct.",
+  "feedbackDetaille": {
+    "pointsPositifs": "Tu as bien mentionné [ce que l'élève a dit de correct, citant sa formulation].",
+    "pointsManquants": "Il manque [précisément ce qui manque ou est imprécis].",
+    "pourquoi": "Ta réponse '[extrait de la réponse de l'élève]' est incomplète car [explication liée à ce que l'élève a écrit, pas générique]."
+  }
 }
-ou
+
+Pour "incorrect" :
 {
   "niveauCorrection": "incorrect",
-  "feedback": "Ta réponse évoque X mais il manque Y. La réponse attendue est : ${reponseCorrecte}."
-}`;
+  "feedback": "Réponse incorrecte.",
+  "feedbackDetaille": {
+    "pointsPositifs": "[Ce qui est correct ou pertinent dans la réponse, ou null si rien]",
+    "pointsManquants": "La réponse attendue est : ${reponseCorrecte}. Il manque [les éléments clés absents].",
+    "pourquoi": "Tu as écrit '[extrait de la réponse de l'élève]' : [explication pourquoi c'est faux, directement liée à ce que l'élève a écrit]."
+  }
+}
+
+Les champs feedbackDetaille doivent être personnalisés par rapport à la réponse de l'élève, pas génériques.`;
 
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
-      max_tokens: 150,
+      max_tokens: 300,
       messages: [{ role: "user", content: prompt }],
     });
 
@@ -101,10 +118,20 @@ ou
     const niveauCorrection = ["correct", "partiel", "incorrect"].includes(result.niveauCorrection)
       ? (result.niveauCorrection as "correct" | "partiel" | "incorrect")
       : (result.correcte ? "correct" : "incorrect");
+
+    const feedbackDetaille = result.feedbackDetaille && typeof result.feedbackDetaille === "object"
+      ? {
+          pointsPositifs: result.feedbackDetaille.pointsPositifs || undefined,
+          pointsManquants: result.feedbackDetaille.pointsManquants || undefined,
+          pourquoi: result.feedbackDetaille.pourquoi || undefined,
+        }
+      : undefined;
+
     return NextResponse.json({
       correcte: niveauCorrection === "correct",
       niveauCorrection,
       feedback: String(result.feedback ?? ""),
+      feedbackDetaille,
     });
   } catch {
     const niveau = verifierLocalReponse(reponseUser, reponseCorrecte);

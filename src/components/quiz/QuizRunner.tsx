@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { Question, ReponseUtilisateur, NiveauCorrection } from "@/types";
+import type { Question, ReponseUtilisateur, NiveauCorrection, FeedbackDetaille } from "@/types";
 import QuestionCard, { TEMPS_MAX_PAR_TYPE } from "./QuestionCard";
 import CorrectionDisplay from "./CorrectionDisplay";
 import ScoreDisplay from "./ScoreDisplay";
@@ -62,6 +62,7 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
     correcte: boolean;
     niveauCorrection: NiveauCorrection;
     feedback?: string;
+    feedbackDetaille?: FeedbackDetaille;
   } | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [niveau, setNiveau] = useState<NiveauDifficulte>("intermediaire");
@@ -158,6 +159,7 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
 
         let niveauCorrection: NiveauCorrection;
         let feedback: string | undefined;
+        let feedbackDetaille: FeedbackDetaille | undefined;
 
         if (res.ok) {
           const data = await res.json();
@@ -165,6 +167,7 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
             ? data.niveauCorrection
             : (data.correcte ? "correct" : "incorrect")) as NiveauCorrection;
           feedback = String(data.feedback ?? "");
+          feedbackDetaille = data.feedbackDetaille ?? undefined;
         } else {
           niveauCorrection = verifierReponseLocale(question, reponse) ? "correct" : "incorrect";
         }
@@ -173,7 +176,7 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
         const points = calculerPoints(niveauCorrection, elapsedMs, tempsMaxMs);
         const nouvelleReponse: ReponseUtilisateur = { questionIndex, reponse, correcte, niveauCorrection, tempsMs: elapsedMs, pointsObtenus: points };
         setReponses((prev) => [...prev, nouvelleReponse]);
-        setDerniereReponse({ reponse, correcte, niveauCorrection, feedback });
+        setDerniereReponse({ reponse, correcte, niveauCorrection, feedback, feedbackDetaille });
         setEtat("correction");
       } catch {
         const ok = verifierReponseLocale(question, reponse);
@@ -344,6 +347,7 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
             correcte={derniereReponse.correcte}
             niveauCorrection={derniereReponse.niveauCorrection}
             feedback={derniereReponse.feedback}
+            feedbackDetaille={derniereReponse.feedbackDetaille}
             onSuivant={handleSuivant}
             estDerniere={questionIndex + 1 >= questions.length}
           />
