@@ -18,14 +18,14 @@ test.describe("Tests responsive", () => {
   });
 
   test("page chapitres : pas de débordement horizontal", async ({ page }) => {
-    await page.goto("/mathematiques");
+    await page.goto("/seconde/mathematiques");
     const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
     const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
     expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 2);
   });
 
   test("les chapitres sont cliquables", async ({ page }) => {
-    await page.goto("/mathematiques");
+    await page.goto("/seconde/mathematiques");
     const premierChapitre = page.locator('[data-testid="chapitre-card"]').first();
     await expect(premierChapitre).toBeVisible();
     const box = await premierChapitre.boundingBox();
@@ -52,7 +52,7 @@ test.describe("Tests responsive", () => {
       });
     });
 
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     const container = page.locator('[data-testid="quiz-container"]');
     await expect(container).toBeVisible();
     const box = await container.boundingBox();

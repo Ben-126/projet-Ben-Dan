@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { ajouterHistorique } from "./history";
 
 export type NiveauDifficulte = "debutant" | "intermediaire" | "avance";
@@ -9,6 +10,15 @@ export interface PerformanceChapitre {
   dernieresErreurs: string[]; // questions du dernier quiz non réussies
 }
 
+const PerformanceChapitreSchema = z.object({
+  nombreQuizCompletes: z.number().int().min(0),
+  scoreMoyen: z.number().min(0).max(100),
+  derniersScores: z.array(z.number().min(0).max(100)),
+  dernieresErreurs: z.array(z.string()),
+});
+
+const StorageSchema = z.record(PerformanceChapitreSchema);
+
 const STORAGE_KEY = "quiz-performances";
 const MAX_SCORES = 5;
 
@@ -16,7 +26,9 @@ function getStorage(): Record<string, PerformanceChapitre> {
   if (typeof window === "undefined") return {};
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Record<string, PerformanceChapitre>) : {};
+    if (!raw) return {};
+    const parsed = StorageSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : {};
   } catch {
     return {};
   }

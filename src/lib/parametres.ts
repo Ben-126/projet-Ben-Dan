@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 const PARAMETRES_KEY = "quiz-parametres";
 
 export type ObjectifType = "minimum" | "personnalise";
@@ -14,6 +16,16 @@ export interface Parametres {
   notificationsActivees: boolean;
 }
 
+const ParametresSchema = z.object({
+  objectifType: z.enum(["minimum", "personnalise"]),
+  objectifNombre: z.number().int().min(1).max(10),
+  seuilReussite: z.number().min(50).max(100),
+  niveauDefaut: z.enum(["seconde", "premiere", "terminale"]),
+  explicationsAvanceesOuvertes: z.boolean(),
+  questionsParQuiz: z.union([z.literal(3), z.literal(5), z.literal(10)]),
+  notificationsActivees: z.boolean(),
+});
+
 export const PARAMETRES_DEFAUT: Parametres = {
   objectifType: "minimum",
   objectifNombre: 1,
@@ -29,7 +41,9 @@ export function getParametres(): Parametres {
   try {
     const raw = localStorage.getItem(PARAMETRES_KEY);
     if (!raw) return PARAMETRES_DEFAUT;
-    return { ...PARAMETRES_DEFAUT, ...(JSON.parse(raw) as Partial<Parametres>) };
+    const merged = { ...PARAMETRES_DEFAUT, ...(JSON.parse(raw) as Partial<Parametres>) };
+    const parsed = ParametresSchema.safeParse(merged);
+    return parsed.success ? parsed.data : PARAMETRES_DEFAUT;
   } catch {
     return PARAMETRES_DEFAUT;
   }

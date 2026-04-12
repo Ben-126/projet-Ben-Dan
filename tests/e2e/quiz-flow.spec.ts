@@ -36,7 +36,7 @@ test.describe("Parcours quiz complet (API mockée)", () => {
   });
 
   test("le quiz se charge et affiche la première question", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
 
     // Le spinner peut disparaître très vite — on vérifie directement la question
     await expect(page.locator('[data-testid="question-texte"]')).toBeVisible({ timeout: 15000 });
@@ -44,7 +44,7 @@ test.describe("Parcours quiz complet (API mockée)", () => {
   });
 
   test("réponse QCM correcte affiche la correction", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await expect(page.locator('[data-testid="options-qcm"]')).toBeVisible({ timeout: 10000 });
 
     await page.locator('[data-testid="options-qcm"] button', { hasText: "4" }).click();
@@ -54,7 +54,7 @@ test.describe("Parcours quiz complet (API mockée)", () => {
   });
 
   test("réponse QCM incorrecte affiche la mauvaise réponse", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await expect(page.locator('[data-testid="options-qcm"]')).toBeVisible({ timeout: 10000 });
 
     await page.locator('[data-testid="options-qcm"] button', { hasText: "3" }).click();
@@ -64,7 +64,7 @@ test.describe("Parcours quiz complet (API mockée)", () => {
   });
 
   test("parcours complet du quiz aboutit au score", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
 
     // Q1 QCM
     await expect(page.locator('[data-testid="options-qcm"]')).toBeVisible({ timeout: 10000 });
@@ -85,11 +85,11 @@ test.describe("Parcours quiz complet (API mockée)", () => {
     // Score final
     await expect(page.locator('[data-testid="score-display"]')).toBeVisible();
     await expect(page.locator('[data-testid="score-valeur"]')).toBeVisible();
-    await expect(page.locator('[data-testid="score-pourcentage"]')).toBeVisible();
+    await expect(page.locator('[data-testid="score-points"]')).toBeVisible();
   });
 
   test("le bouton Refaire relance un nouveau quiz", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
 
     // Parcours rapide
     await expect(page.locator('[data-testid="options-qcm"]')).toBeVisible({ timeout: 10000 });
@@ -109,7 +109,7 @@ test.describe("Parcours quiz complet (API mockée)", () => {
   });
 
   test("le bouton Retour aux chapitres fonctionne depuis le score", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
 
     await expect(page.locator('[data-testid="options-qcm"]')).toBeVisible({ timeout: 10000 });
     await page.locator('[data-testid="options-qcm"] button').first().click();
@@ -121,7 +121,7 @@ test.describe("Parcours quiz complet (API mockée)", () => {
     await page.locator('[data-testid="btn-suivant"]').click();
 
     await page.locator('[data-testid="btn-retour-chapitres"]').click();
-    await page.waitForURL("**/mathematiques", { timeout: 10000 });
-    await expect(page).toHaveURL("/mathematiques");
+    await page.waitForURL("**/seconde/mathematiques", { timeout: 10000 });
+    await expect(page).toHaveURL("/seconde/mathematiques");
   });
 });

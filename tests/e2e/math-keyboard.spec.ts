@@ -36,42 +36,42 @@ test.describe("Clavier mathématique — PC", () => {
   });
 
   test("le bouton clavier apparaît pour une question reponse_courte en maths", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     const boutonClavier = page.locator('button[title="Clavier mathématique"]');
     await expect(boutonClavier).toBeVisible();
   });
 
   test("le clavier s'ouvre et se ferme au clic du bouton", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
 
     // Le clavier est fermé par défaut
-    await expect(page.locator('button[role="button"]').filter({ hasText: "OPÉRATIONS" })).not.toBeVisible();
+    await expect(page.getByRole('button', { name: 'OPÉRATIONS', exact: true })).not.toBeVisible();
 
     // Ouvrir le clavier
     await page.click('button[title="Clavier mathématique"]');
-    await expect(page.locator('text=OPÉRATIONS')).toBeVisible();
-    await expect(page.locator('text=PHYSIQUE-CHIMIE')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'OPÉRATIONS', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'PHYSIQUE-CHIMIE', exact: true })).toBeVisible();
 
     // Fermer le clavier
     await page.click('button[title="Clavier mathématique"]');
-    await expect(page.locator('text=OPÉRATIONS')).not.toBeVisible();
+    await expect(page.getByRole('button', { name: 'OPÉRATIONS', exact: true })).not.toBeVisible();
   });
 
   test("les 7 onglets sont tous présents", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
 
     const onglets = ["OPÉRATIONS", "INÉQUATIONS", "GÉOMÉTRIE", "ENSEMBLES", "UNITÉS", "SUITES ET FONCTIONS", "PHYSIQUE-CHIMIE"];
     for (const onglet of onglets) {
-      await expect(page.locator(`text=${onglet}`)).toBeVisible();
+      await expect(page.getByRole('button', { name: onglet, exact: true })).toBeVisible();
     }
   });
 
   test("un symbole OPÉRATIONS s'insère dans le champ texte", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
 
@@ -83,7 +83,7 @@ test.describe("Clavier mathématique — PC", () => {
   });
 
   test("plusieurs symboles s'accumulent dans l'input", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
 
@@ -97,10 +97,10 @@ test.describe("Clavier mathématique — PC", () => {
   });
 
   test("l'onglet INÉQUATIONS affiche ≤ ≥ < > ≈", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
-    await page.click('text=INÉQUATIONS');
+    await page.getByRole('button', { name: 'INÉQUATIONS', exact: true }).click();
 
     await expect(page.locator('button:has-text("≤")')).toBeVisible();
     await expect(page.locator('button:has-text("≥")')).toBeVisible();
@@ -108,10 +108,10 @@ test.describe("Clavier mathématique — PC", () => {
   });
 
   test("l'onglet ENSEMBLES affiche ℕ ℤ ℝ ∈ ∉", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
-    await page.click('text=ENSEMBLES');
+    await page.getByRole('button', { name: 'ENSEMBLES', exact: true }).click();
 
     // Sélecteurs exacts (exact: true) pour éviter les faux positifs entre ℝ et ℝ*, ∈ et ∉
     await expect(page.getByRole("button", { name: "ℕ", exact: true })).toBeVisible();
@@ -122,10 +122,10 @@ test.describe("Clavier mathématique — PC", () => {
   });
 
   test("l'onglet PHYSIQUE-CHIMIE affiche → ρ ⇌ Δ", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
-    await page.click('text=PHYSIQUE-CHIMIE');
+    await page.getByRole('button', { name: 'PHYSIQUE-CHIMIE', exact: true }).click();
 
     await expect(page.locator('button:has-text("→")')).toBeVisible();
     await expect(page.locator('button:has-text("ρ")')).toBeVisible();
@@ -134,7 +134,7 @@ test.describe("Clavier mathématique — PC", () => {
   });
 
   test("le clavier apparaît aussi pour physique-chimie", async ({ page }) => {
-    await page.goto("/physique-chimie/constitution-et-transformation/quiz");
+    await page.goto("/seconde/physique-chimie/constitution-et-transformation/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     const boutonClavier = page.locator('button[title="Clavier mathématique"]');
     await expect(boutonClavier).toBeVisible();
@@ -144,7 +144,7 @@ test.describe("Clavier mathématique — PC", () => {
     await page.route("/api/quiz/generate", (route) =>
       route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(MOCK_QCM) })
     );
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="options-qcm"]');
     await expect(page.locator('button[title="Clavier mathématique"]')).not.toBeVisible();
   });
@@ -153,13 +153,13 @@ test.describe("Clavier mathématique — PC", () => {
     await page.route("/api/quiz/generate", (route) =>
       route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(MOCK_REPONSE_COURTE) })
     );
-    await page.goto("/francais/poesie-moyen-age-xviiie/quiz");
+    await page.goto("/seconde/francais/poesie-moyen-age-xviiie/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await expect(page.locator('button[title="Clavier mathématique"]')).not.toBeVisible();
   });
 
   test("le formulaire se soumet avec un symbole inséré", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
     await page.click('button:has-text("3")');
@@ -173,7 +173,7 @@ test.describe("Clavier mathématique — PC", () => {
   });
 
   test("pas de débordement horizontal avec le clavier ouvert", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
 
@@ -195,13 +195,13 @@ test.describe("Clavier mathématique — Tablette (768px)", () => {
   });
 
   test("le bouton clavier est visible sur tablette", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await expect(page.locator('button[title="Clavier mathématique"]')).toBeVisible();
   });
 
   test("le clavier s'ouvre sans débordement horizontal sur tablette", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
     await expect(page.locator('text=OPÉRATIONS')).toBeVisible();
@@ -212,17 +212,17 @@ test.describe("Clavier mathématique — Tablette (768px)", () => {
   });
 
   test("les onglets sont scrollables sur tablette", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
 
     // L'onglet le plus à droite doit être accessible
-    await page.click('text=PHYSIQUE-CHIMIE');
+    await page.getByRole('button', { name: 'PHYSIQUE-CHIMIE', exact: true }).click();
     await expect(page.locator('button:has-text("→")')).toBeVisible();
   });
 
   test("un symbole s'insère correctement sur tablette", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
     await page.click('button:has-text("π")');
@@ -242,13 +242,13 @@ test.describe("Clavier mathématique — Téléphone (375px)", () => {
   });
 
   test("le bouton clavier est visible sur téléphone", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await expect(page.locator('button[title="Clavier mathématique"]')).toBeVisible();
   });
 
   test("le clavier s'ouvre sans débordement horizontal sur téléphone", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
     await expect(page.locator('text=OPÉRATIONS')).toBeVisible();
@@ -259,7 +259,7 @@ test.describe("Clavier mathématique — Téléphone (375px)", () => {
   });
 
   test("les boutons de symboles sont suffisamment grands sur téléphone", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
 
@@ -272,20 +272,20 @@ test.describe("Clavier mathématique — Téléphone (375px)", () => {
   });
 
   test("un symbole s'insère correctement sur téléphone", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
-    await page.click('text=INÉQUATIONS');
+    await page.getByRole('button', { name: 'INÉQUATIONS', exact: true }).click();
     await page.click('button:has-text("≤")');
     await expect(page.locator('input[name="reponse"]')).toHaveValue("≤");
   });
 
   test("l'onglet SUITES ET FONCTIONS est accessible sur téléphone", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
 
-    const onglet = page.locator('text=SUITES ET FONCTIONS');
+    const onglet = page.getByRole('button', { name: 'SUITES ET FONCTIONS', exact: true });
     await expect(onglet).toBeVisible();
     await onglet.scrollIntoViewIfNeeded();
     await onglet.click();
@@ -293,7 +293,7 @@ test.describe("Clavier mathématique — Téléphone (375px)", () => {
   });
 
   test("le formulaire complet fonctionne sur téléphone", async ({ page }) => {
-    await page.goto("/mathematiques/nombres-et-calculs/quiz");
+    await page.goto("/seconde/mathematiques/nombres-et-calculs/quiz");
     await page.waitForSelector('[data-testid="form-reponse-courte"]');
     await page.click('button[title="Clavier mathématique"]');
     await page.click('button:has-text("3")');
