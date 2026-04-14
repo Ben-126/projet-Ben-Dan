@@ -20,7 +20,23 @@
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(-45deg, #eef2ff, #fdf4ff, #fff7ed, #ecfdf5);
+  background-size: 400% 400%;
+  animation: gradientShift 20s ease infinite;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    animation: none;
+    background: #eef2ff;
+  }
 }

@@ -215,6 +215,13 @@ Créer une application mobile de révision basée sur des quiz générés par IA
 
 ---
 
+### Landing page
+- à mettre a jour suivant ubdates style abonnement payant
+- infos importantes en générale 
+- aprobation des cookies
+
+---
+
 ##  Bonus (V2)
 
 ###  Mode “Je n’ai pas compris”
@@ -232,6 +239,14 @@ Créer une application mobile de révision basée sur des quiz générés par IA
 - Objectifs définis par l’utilisateur
 - Exemple :
   - “Avoir 15/20 en mathématiques”
+
+
+  ### Post dévellopement: 
+  - systeme de cookies, 
+  - système de comptes, 
+  - ne pas oublier de faire du contenu sur les résaux sociaux, 
+  - systeme d abonnements payants suivant usage, 
+  - système de bêta testeurs (canneaux Discorde)
 
 ---
 

@@ -20,7 +20,7 @@ export default function Header({ titre, showBack, backHref }: HeaderProps) {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <header className="bg-white/80 backdrop-blur-md border-b border-white/60 sticky top-0 z-10 shadow-sm">
       <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
         {showBack && (
           <button
