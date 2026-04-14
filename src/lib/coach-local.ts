@@ -140,10 +140,14 @@ function construireReponse(messages: Message[], ctx: CoachContextLocal): string 
     }
   }
 
-  return `En ${niveauLabel}${ctx.matiere ? ` en ${ctx.matiere}` : ""}, cette notion est importante. N'hésite pas à me poser une question plus précise sur ce que tu ne comprends pas.`;
+  if (ctx.questionCourante) {
+    return `Pour répondre à cette question, commence par bien lire l'énoncé et identifie ce qui est demandé. Réponds, puis je pourrai t'expliquer la méthode en détail.`;
+  }
+
+  return `Pose-moi une question précise sur le cours ou sur ce que tu ne comprends pas, je ferai de mon mieux pour t'aider !`;
 }
 
 export function repondreLocalement(messages: Message[], ctx: CoachContextLocal): string {
   const reponse = construireReponse(messages, ctx);
-  return reponse + "\n\n_(Réponse générée localement · Configure une clé API pour un coach IA complet)_";
+  return reponse + "\n\n(Réponse générée localement · Configure une clé API pour un coach IA complet)";
 }
