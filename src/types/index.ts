@@ -80,3 +80,5 @@ export interface ResultatQuiz {
   total: number;
   reponses: ReponseUtilisateur[];
 }
+
+export type ModeQuiz = "entrainement" | "controle";

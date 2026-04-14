@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { Question, ReponseUtilisateur, NiveauCorrection, FeedbackDetaille, Competence } from "@/types";
+import type { Question, ReponseUtilisateur, NiveauCorrection, FeedbackDetaille, Competence, ModeQuiz } from "@/types";
 import QuestionCard, { TEMPS_MAX_PAR_TYPE } from "./QuestionCard";
 import CorrectionDisplay from "./CorrectionDisplay";
 import ScoreDisplay from "./ScoreDisplay";
+import ModeSelector from "./ModeSelector";
 import {
   getPerformance,
   getNiveau,
@@ -12,9 +13,11 @@ import {
 } from "@/lib/performance";
 import { getParametres } from "@/lib/parametres";
 
-type EtatQuiz = "chargement" | "question" | "verification" | "correction" | "termine" | "erreur";
+type EtatQuiz = "selection_mode" | "chargement" | "question" | "verification" | "correction" | "termine" | "erreur";
 
 const MATIERES_AVEC_CLAVIER_MATH = new Set(["mathematiques", "physique-chimie", "svt", "snt"]);
+const QUESTIONS_PAR_CONTROLE = 10;
+const SECONDES_PAR_QUESTION_CONTROLE = 45;
 
 interface QuizRunnerProps {
   matiereSlug: string;
@@ -53,8 +56,15 @@ function verifierReponseLocale(question: Question, reponseUser: string | boolean
   return u === c || u.includes(c) || c.includes(u);
 }
 
+function formatTemps(secondes: number): string {
+  const m = Math.floor(secondes / 60);
+  const s = secondes % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, niveauLycee = "seconde", matiereName = "", competences = [] }: QuizRunnerProps) {
-  const [etat, setEtat] = useState<EtatQuiz>("chargement");
+  const [etat, setEtat] = useState<EtatQuiz>("selection_mode");
+  const [modeQuiz, setModeQuiz] = useState<ModeQuiz>("entrainement");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [reponses, setReponses] = useState<ReponseUtilisateur[]>([]);
@@ -68,19 +78,30 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
   const [erreur, setErreur] = useState<string | null>(null);
   const [niveau, setNiveau] = useState<NiveauDifficulte>("intermediaire");
   const [modeRevision, setModeRevision] = useState<ModeRevision>({ actif: false, questionsRatees: [] });
+  const [tempsControle, setTempsControle] = useState(0);
   const debutQuestionRef = useRef<number>(0);
 
-  const chargerQuiz = useCallback(async (revisionConfig?: ModeRevision) => {
+  // Countdown timer for contrôle mode
+  useEffect(() => {
+    if (modeQuiz !== "controle" || etat !== "question" || tempsControle <= 0) return;
+    const id = setTimeout(() => {
+      setTempsControle((prev) => prev - 1);
+    }, 1000);
+    return () => clearTimeout(id);
+  }, [modeQuiz, etat, tempsControle]);
+
+  const chargerQuiz = useCallback(async (revisionConfig?: ModeRevision, forceMode?: ModeQuiz) => {
     setEtat("chargement");
     setQuestionIndex(0);
     setReponses([]);
     setDerniereReponse(null);
     setErreur(null);
 
+    const mode = forceMode ?? modeQuiz;
     const performance = getPerformance(matiereSlug, chapitreSlug);
     const niveauActuel = getNiveau(performance);
     setNiveau(niveauActuel);
-    const { questionsParQuiz } = getParametres();
+    const questionsParQuiz = mode === "controle" ? QUESTIONS_PAR_CONTROLE : getParametres().questionsParQuiz;
 
     const body: Record<string, unknown> = { matiereSlug, chapitreSlug, niveau: niveauActuel, niveauLycee, questionsParQuiz };
     if (revisionConfig?.actif && revisionConfig.questionsRatees.length > 0) {
@@ -101,25 +122,65 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
       const data = await res.json();
       setQuestions(data.questions);
       debutQuestionRef.current = Date.now();
+
+      if (mode === "controle") {
+        setTempsControle(questionsParQuiz * SECONDES_PAR_QUESTION_CONTROLE);
+      }
+
       setEtat("question");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erreur inconnue";
       setErreur(message);
       setEtat("erreur");
     }
-  }, [matiereSlug, chapitreSlug]);
+  }, [matiereSlug, chapitreSlug, modeQuiz, niveauLycee]);
 
-  useEffect(() => {
-    setModeRevision({ actif: false, questionsRatees: [] });
-    chargerQuiz();
-  }, [chargerQuiz]);
-
-  function calculerPoints(niveau: NiveauCorrection, elapsedMs: number, tempsMaxMs: number): number {
-    if (niveau === "incorrect") return 0;
+  function calculerPoints(niv: NiveauCorrection, elapsedMs: number, tempsMaxMs: number): number {
+    if (niv === "incorrect") return 0;
     const ratio = Math.max(0, 1 - elapsedMs / tempsMaxMs);
-    if (niveau === "partiel") return Math.round(20 + ratio * 30);
+    if (niv === "partiel") return Math.round(20 + ratio * 30);
     return Math.round(40 + ratio * 60);
   }
+
+  const handleTerminer = useCallback((reponsesFinales: ReponseUtilisateur[]) => {
+    const totalPoints = reponsesFinales.reduce((sum, r) => sum + r.pointsObtenus, 0);
+    const maxPoints = questions.length * 100;
+    const pourcentage = Math.round((totalPoints / maxPoints) * 100);
+    const ratees = reponsesFinales
+      .filter((r) => !r.correcte)
+      .map((r) => questions[r.questionIndex]?.question ?? "")
+      .filter(Boolean);
+
+    sauvegarderPerformance(matiereSlug, chapitreSlug, pourcentage, ratees, {
+      niveau: niveauLycee,
+      matiereName,
+      chapitreNom: titreChapitre,
+    });
+    setEtat("termine");
+  }, [questions, matiereSlug, chapitreSlug, niveauLycee, matiereName, titreChapitre]);
+
+  // Handle contrôle timer expiry
+  useEffect(() => {
+    if (modeQuiz !== "controle" || tempsControle !== 0 || etat !== "question" || questions.length === 0) return;
+    const remaining: ReponseUtilisateur[] = [];
+    for (let i = reponses.length; i < questions.length; i++) {
+      remaining.push({
+        questionIndex: i,
+        reponse: "",
+        correcte: false,
+        niveauCorrection: "incorrect",
+        tempsMs: 0,
+        pointsObtenus: 0,
+      });
+    }
+    handleTerminer([...reponses, ...remaining]);
+  }, [modeQuiz, tempsControle, etat, reponses, questions, handleTerminer]);
+
+  const handleSelectMode = (mode: ModeQuiz) => {
+    setModeQuiz(mode);
+    setModeRevision({ actif: false, questionsRatees: [] });
+    chargerQuiz(undefined, mode);
+  };
 
   const handleTimeUp = () => {
     if (etat !== "question") return;
@@ -144,6 +205,26 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
     const elapsedMs = Date.now() - debutQuestionRef.current;
     const tempsMaxMs = TEMPS_MAX_PAR_TYPE[question.type];
 
+    // Mode contrôle: réponse locale immédiate, pas de correction intermédiaire
+    if (modeQuiz === "controle") {
+      const correcte = verifierReponseLocale(question, reponse);
+      const niveauCorrection: NiveauCorrection = correcte ? "correct" : "incorrect";
+      const points = calculerPoints(niveauCorrection, elapsedMs, tempsMaxMs);
+      const nouvelleReponse: ReponseUtilisateur = { questionIndex, reponse, correcte, niveauCorrection, tempsMs: elapsedMs, pointsObtenus: points };
+      const newReponses = [...reponses, nouvelleReponse];
+      setReponses(newReponses);
+
+      if (questionIndex + 1 >= questions.length) {
+        handleTerminer(newReponses);
+      } else {
+        setQuestionIndex((i) => i + 1);
+        debutQuestionRef.current = Date.now();
+        setEtat("question");
+      }
+      return;
+    }
+
+    // Mode entraînement: vérification avec feedback
     if (question.type === "reponse_courte") {
       setEtat("verification");
       try {
@@ -201,23 +282,6 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
     debutQuestionRef.current = Date.now();
   };
 
-  const handleTerminer = useCallback((reponsesFinales: ReponseUtilisateur[]) => {
-    const totalPoints = reponsesFinales.reduce((sum, r) => sum + r.pointsObtenus, 0);
-    const maxPoints = questions.length * 100;
-    const pourcentage = Math.round((totalPoints / maxPoints) * 100);
-    const ratees = reponsesFinales
-      .filter((r) => !r.correcte)
-      .map((r) => questions[r.questionIndex]?.question ?? "")
-      .filter(Boolean);
-
-    sauvegarderPerformance(matiereSlug, chapitreSlug, pourcentage, ratees, {
-      niveau: niveauLycee,
-      matiereName,
-      chapitreNom: titreChapitre,
-    });
-    setEtat("termine");
-  }, [questions, matiereSlug, chapitreSlug, niveauLycee, matiereName, titreChapitre]);
-
   const handleSuivant = () => {
     if (questionIndex + 1 >= questions.length) {
       handleTerminer(reponses);
@@ -232,15 +296,19 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
   const score = reponses.reduce((sum, r) => sum + r.pointsObtenus, 0);
   const maxScore = questions.length * 100;
   const showMathKeyboard = MATIERES_AVEC_CLAVIER_MATH.has(matiereSlug);
-
   const etiquetteNiveau = niveau === "debutant" ? "Débutant" : niveau === "avance" ? "Avancé" : null;
+
+  // Sélection du mode
+  if (etat === "selection_mode") {
+    return <ModeSelector titreChapitre={titreChapitre} onSelectMode={handleSelectMode} />;
+  }
 
   if (etat === "chargement") {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-4" data-testid="chargement">
         <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
         <p className="text-gray-500 text-sm">
-          {modeRevision.actif ? "Préparation de la révision ciblée..." : "Génération du quiz en cours..."}
+          {modeRevision.actif ? "Préparation de la révision ciblée..." : modeQuiz === "controle" ? "Préparation du contrôle..." : "Génération du quiz en cours..."}
         </p>
         <p className="text-gray-400 text-xs">{titreChapitre}</p>
       </div>
@@ -285,11 +353,22 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
         questionsRatees={questionsRateesQuiz}
         modeRevision={modeRevision.actif}
         competences={competences}
+        modeControle={modeQuiz === "controle"}
+        questions={questions}
+        reponses={reponses}
         onRecommencer={() => {
-          setModeRevision({ actif: false, questionsRatees: [] });
-          chargerQuiz();
+          if (modeQuiz === "controle") {
+            setModeRevision({ actif: false, questionsRatees: [] });
+            chargerQuiz(undefined, "controle");
+          } else {
+            setModeRevision({ actif: false, questionsRatees: [] });
+            chargerQuiz();
+          }
         }}
-        onReviserErreurs={questionsRateesQuiz.length > 0 ? handleReviserErreurs : undefined}
+        onChoisirMode={() => {
+          setEtat("selection_mode");
+        }}
+        onReviserErreurs={modeQuiz === "entrainement" && questionsRateesQuiz.length > 0 ? handleReviserErreurs : undefined}
       />
     );
   }
@@ -298,7 +377,28 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
 
   return (
     <div className="space-y-4">
-      {(etiquetteNiveau || modeRevision.actif) && (
+      {/* Bandeau mode contrôle avec chronomètre global */}
+      {modeQuiz === "controle" && etat === "question" && (
+        <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl border-2 ${
+          tempsControle <= 60 ? "bg-red-50 border-red-300" :
+          tempsControle <= 120 ? "bg-orange-50 border-orange-300" :
+          "bg-orange-50 border-orange-200"
+        }`}>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-orange-700">📝 Mode Contrôle</span>
+          </div>
+          <div className={`flex items-center gap-1.5 font-mono font-bold text-lg ${
+            tempsControle <= 60 ? "text-red-600" :
+            tempsControle <= 120 ? "text-orange-600" :
+            "text-orange-700"
+          }`}>
+            <span aria-label="Temps restant">⏱</span>
+            <span data-testid="timer-controle">{formatTemps(tempsControle)}</span>
+          </div>
+        </div>
+      )}
+
+      {(etiquetteNiveau || modeRevision.actif) && modeQuiz === "entrainement" && (
         <div className="flex gap-2 flex-wrap">
           {etiquetteNiveau && (
             <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
@@ -314,6 +414,7 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
           )}
         </div>
       )}
+
       {etat === "verification" && (
         <div className="flex flex-col items-center justify-center py-8 gap-3" data-testid="verification">
           <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
@@ -327,10 +428,11 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
           index={questionIndex}
           total={questions.length}
           onAnswer={handleReponse}
-          onTimeUp={handleTimeUp}
+          onTimeUp={modeQuiz === "controle" ? undefined : handleTimeUp}
           disabled={false}
           showMathKeyboard={showMathKeyboard}
           competenceLabel={competences.length > 0 ? competences[questionIndex % competences.length]?.titre : undefined}
+          sansMinuterie={modeQuiz === "controle"}
         />
       )}
 

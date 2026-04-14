@@ -13,6 +13,7 @@ interface QuestionCardProps {
   showMathKeyboard?: boolean;
   tempsMaxMs?: number;
   competenceLabel?: string;
+  sansMinuterie?: boolean;
 }
 
 export const TEMPS_MAX_PAR_TYPE: Record<Question["type"], number> = {
@@ -31,6 +32,7 @@ export default function QuestionCard({
   showMathKeyboard = false,
   tempsMaxMs,
   competenceLabel,
+  sansMinuterie = false,
 }: QuestionCardProps) {
   const [valeur, setValeur] = useState("");
   const [clavierOuvert, setClavierOuvert] = useState(false);
@@ -40,7 +42,7 @@ export default function QuestionCard({
 
   useEffect(() => {
     setTempsRestantMs(maxMs);
-    if (disabled) return;
+    if (disabled || sansMinuterie) return;
     const debut = Date.now();
     const interval = setInterval(() => {
       const elapsed = Date.now() - debut;
@@ -52,7 +54,7 @@ export default function QuestionCard({
       }
     }, 100);
     return () => clearInterval(interval);
-  }, [question, maxMs, disabled, onTimeUp]);
+  }, [question, maxMs, disabled, onTimeUp, sansMinuterie]);
 
   const tempsRestantSec = Math.ceil(tempsRestantMs / 1000);
   const ratioRestant = tempsRestantMs / maxMs;
@@ -85,14 +87,14 @@ export default function QuestionCard({
             style={{ width: `${((index + 1) / total) * 100}%` }}
           />
         </div>
-        {!disabled && (
+        {!disabled && !sansMinuterie && (
           <span className={`text-xs font-bold tabular-nums px-2 py-0.5 rounded-full text-white ${couleurTimer}`}>
             {tempsRestantSec}s
           </span>
         )}
       </div>
 
-      {!disabled && (
+      {!disabled && !sansMinuterie && (
         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
           <div
             className={`h-full ${couleurTimer} rounded-full transition-all duration-100`}
