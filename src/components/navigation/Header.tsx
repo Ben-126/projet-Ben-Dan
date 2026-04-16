@@ -34,13 +34,9 @@ export default function Header({ titre, showBack, backHref }: HeaderProps) {
             </svg>
           </button>
         )}
-        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="" aria-hidden="true" className="w-8 h-8 object-contain" />
-          <svg width="110" height="30" viewBox="0 0 340 95" role="img" aria-label="Révioria" xmlns="http://www.w3.org/2000/svg">
-            <text x="162" y="70" fontFamily="Georgia, serif" fontSize="66" fontWeight="300" fill="#0F172A" textAnchor="middle" letterSpacing="6">Révioria</text>
-            <circle cx="299" cy="50" r="7" fill="#2563EB" />
-          </svg>
+        <Link href="/" aria-label="Révioria — Accueil" className="flex items-center hover:opacity-75 transition-opacity">
+          <span className="font-serif font-light tracking-[0.12em] text-xl text-[#0F172A]">Révioria</span>
+          <span className="inline-block w-[7px] h-[7px] rounded-full bg-[#2563EB] ml-[5px] mb-[3px] shrink-0" />
         </Link>
         {titre && (
           <>
