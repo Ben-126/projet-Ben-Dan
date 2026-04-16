@@ -40,3 +40,12 @@ body {
     background: #eef2ff;
   }
 }
+
+@keyframes bounceIn {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  60%  { opacity: 1; transform: translateX(-50%) translateY(4px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.animate-bounce-once {
+  animation: bounceIn 0.4s ease-out forwards;
+}
