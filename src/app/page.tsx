@@ -22,7 +22,7 @@ export default function HomePage() {
         <div className="text-center mb-8">
           <h1 className="flex items-center justify-center mb-2">
             <span className="font-serif font-light tracking-[0.14em] text-5xl sm:text-6xl text-[#0F172A]">Révioria</span>
-            <span className="inline-block w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[#2563EB] ml-2 sm:ml-3 mb-1 shrink-0" />
+            <span className="inline-block w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[#2563EB] ml-2 sm:ml-3 self-end mb-2 sm:mb-3 shrink-0" />
           </h1>
           <p className="text-gray-500 text-sm sm:text-base">
             Révise avec l&apos;IA · Choisis ton niveau puis une matière pour commencer

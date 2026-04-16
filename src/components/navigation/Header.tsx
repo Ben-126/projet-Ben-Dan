@@ -36,7 +36,7 @@ export default function Header({ titre, showBack, backHref }: HeaderProps) {
         )}
         <Link href="/" aria-label="Révioria — Accueil" className="flex items-center hover:opacity-75 transition-opacity">
           <span className="font-serif font-light tracking-[0.12em] text-xl text-[#0F172A]">Révioria</span>
-          <span className="inline-block w-[7px] h-[7px] rounded-full bg-[#2563EB] ml-[5px] mb-[3px] shrink-0" />
+          <span className="inline-block w-[7px] h-[7px] rounded-full bg-[#2563EB] ml-[5px] self-end mb-[4px] shrink-0" />
         </Link>
         {titre && (
           <>
