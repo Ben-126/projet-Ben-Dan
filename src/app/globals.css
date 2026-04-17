@@ -50,10 +50,10 @@ body {
   animation: bounceIn 0.4s ease-out forwards;
 }
 
-/* Points du champ mot de passe plus foncés */
-input[type="password"] {
+/* Texte des champs de formulaire toujours foncé */
+input, textarea, select {
   color: #111827;
 }
-input[type="password"]::placeholder {
+input::placeholder, textarea::placeholder {
   color: #9ca3af;
 }
