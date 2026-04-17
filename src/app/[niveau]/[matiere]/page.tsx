@@ -25,7 +25,7 @@ export default async function MatierePage({ params }: Props) {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header titre={matiere.nom} showBack backHref="/" />
+      <Header />
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-6">
         <div className="flex items-center gap-3 mb-2">
           <div className={`${matiere.couleur} rounded-xl p-3`}>

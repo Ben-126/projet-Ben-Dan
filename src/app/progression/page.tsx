@@ -92,7 +92,7 @@ export default function ProgressionPage() {
   if (!mounted) {
     return (
       <div className="flex flex-col min-h-screen">
-        <Header titre="Ma Progression" showBack backHref="/" />
+        <Header />
         <main className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
         </main>
@@ -103,7 +103,7 @@ export default function ProgressionPage() {
   if (totalQuiz === 0 && historique.length === 0) {
     return (
       <div className="flex flex-col min-h-screen">
-        <Header titre="Ma Progression" showBack backHref="/" />
+        <Header />
         <main className="flex-1 flex flex-col items-center justify-center px-4 text-center gap-4">
           <p className="text-6xl">📊</p>
           <h2 className="text-xl font-bold text-gray-800">Aucune progression pour l&apos;instant</h2>
@@ -123,7 +123,7 @@ export default function ProgressionPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header titre="Ma Progression" showBack backHref="/" />
+      <Header />
       <main className="max-w-4xl mx-auto w-full px-4 py-6 space-y-6">
 
         {totalQuiz > 0 && (

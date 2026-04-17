@@ -34,11 +34,7 @@ export default async function QuizPage({ params }: Props) {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header
-        titre={chapitre.titre}
-        showBack
-        backHref={`/${niveauSlug}/${matiereSlug}`}
-      />
+      <Header />
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-6">
         {/* Fil d'ariane : Niveau → Matière → Chapitre → Quiz */}
         <nav aria-label="Fil d'ariane" className="mb-5">

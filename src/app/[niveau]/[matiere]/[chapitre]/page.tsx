@@ -34,7 +34,7 @@ export default async function ChapitreDetailPage({ params }: Props) {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header titre={chapitre.titre} showBack backHref={`/${niveauSlug}/${matiereSlug}`} />
+      <Header />
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-6">
 
         {/* Fil d'ariane */}

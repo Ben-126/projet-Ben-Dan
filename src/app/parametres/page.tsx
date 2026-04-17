@@ -72,7 +72,7 @@ export default function ParametresPage() {
   if (!mounted) {
     return (
       <div className="flex flex-col min-h-screen">
-        <Header titre="Paramètres" showBack backHref="/" />
+        <Header />
         <main className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
         </main>
@@ -82,7 +82,7 @@ export default function ParametresPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header titre="Paramètres" showBack backHref="/" />
+      <Header />
       <main className="max-w-2xl mx-auto w-full px-4 py-6 space-y-6">
 
         {sauvegarde && (
