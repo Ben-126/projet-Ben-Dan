@@ -104,3 +104,69 @@ export interface ResultatGamification {
   xpTotal: number;
   niveauActuel: number;
 }
+
+// ─── Types sociaux ─────────────────────────────────────────────────────────────
+
+export interface ProfilPublic {
+  id: string;
+  pseudo: string;
+  xp_total: number;
+  niveau: number;
+  streak_jours: number;
+  dernier_quiz_date: string | null;
+  created_at: string;
+}
+
+export type StatutAmitie = "pending" | "accepted";
+
+export interface Amitie {
+  id: string;
+  user_id: string;
+  friend_id: string;
+  status: StatutAmitie;
+  created_at: string;
+  profil?: ProfilPublic; // profil de l'autre utilisateur, jointure optionnelle
+}
+
+export interface Defi {
+  id: string;
+  creator_id: string;
+  target_friend_id: string | null;
+  chapitre_slug: string;
+  matiere_slug: string;
+  niveau_scolaire: string;
+  time_limit_sec: number;
+  expires_at: string;
+  created_at: string;
+  createur?: ProfilPublic;
+}
+
+export interface ResultatDefi {
+  id: string;
+  challenge_id: string;
+  user_id: string;
+  score: number;
+  time_sec: number;
+  completed_at: string;
+  profil?: ProfilPublic;
+}
+
+export type TypeNotification = "friend_request" | "challenge_received" | "challenge_completed";
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: TypeNotification;
+  payload: Record<string, unknown> | null;
+  lu: boolean;
+  created_at: string;
+}
+
+export interface EntreeClassement {
+  id: string;
+  pseudo: string;
+  xp_total: number;
+  niveau: number;
+  streak_jours: number;
+  rang?: number;
+}
