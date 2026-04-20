@@ -51,14 +51,41 @@ Règles :
 - Sois précis et pédagogue
 - Maximum 3 étapes et 2 conseils`;
 
-function corrigerLocalement(): ScanResultat {
-  return {
-    correction: "Correction indisponible sans clé API OpenAI. Configurez OPENAI_API_KEY dans votre fichier .env.local pour activer l'analyse d'exercices.",
-    note: "Mode hors ligne",
-    explication: "La fonctionnalité de scan nécessite une connexion à l'IA. Veuillez configurer votre clé API.",
-    etapes: ["Configurer OPENAI_API_KEY dans .env.local", "Relancer le serveur de développement"],
-    conseils: ["Obtenez une clé API sur platform.openai.com", "Assurez-vous que la clé a accès au modèle gpt-4o-mini"],
-  };
+async function analyserAvecOCR(imageBase64: string): Promise<ScanResultat> {
+  const { createWorker } = await import("tesseract.js");
+
+  const worker = await createWorker("fra+eng");
+  try {
+    const imageBuffer = Buffer.from(imageBase64, "base64");
+    const { data } = await worker.recognize(imageBuffer);
+    const texte = data.text.trim();
+
+    if (!texte || texte.length < 10) {
+      return {
+        correction: "Aucun texte lisible détecté dans l'image.",
+        note: "Mode local — OCR uniquement",
+        explication: "L'OCR local n'a pas pu extraire de texte. Assurez-vous que l'image est nette, ou configurez OPENAI_API_KEY pour une correction complète.",
+        etapes: [],
+        conseils: [
+          "Assurez-vous que l'image est nette et bien éclairée",
+          "Configurez OPENAI_API_KEY dans .env.local pour activer la correction par IA",
+        ],
+      };
+    }
+
+    return {
+      correction: `Texte extrait de l'image :\n\n${texte}`,
+      note: "Mode local — OCR uniquement (sans IA)",
+      explication: "L'analyse locale extrait le texte de votre exercice sans correction intelligente. Configurez OPENAI_API_KEY dans .env.local pour obtenir une correction complète par IA.",
+      etapes: [],
+      conseils: [
+        "Configurez OPENAI_API_KEY dans .env.local pour activer la correction par IA",
+        "Obtenez une clé sur platform.openai.com",
+      ],
+    };
+  } finally {
+    await worker.terminate();
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -87,7 +114,21 @@ export async function POST(req: NextRequest) {
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return Response.json(corrigerLocalement());
+    try {
+      const resultat = await analyserAvecOCR(image);
+      return Response.json(resultat);
+    } catch (err: unknown) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[scan] Erreur OCR:", err);
+      }
+      return Response.json({
+        correction: "Analyse impossible. Configurez OPENAI_API_KEY dans .env.local pour activer la correction par IA.",
+        note: "Mode hors ligne",
+        explication: "Ni l'API OpenAI ni l'OCR local n'ont pu analyser l'image.",
+        etapes: ["Créer un fichier .env.local", "Ajouter OPENAI_API_KEY=votre_clé"],
+        conseils: ["Obtenez une clé sur platform.openai.com"],
+      } satisfies ScanResultat);
+    }
   }
 
   const niveauLabel = niveau === "premiere" ? "Première" : niveau === "terminale" ? "Terminale" : "Seconde";
@@ -130,13 +171,13 @@ export async function POST(req: NextRequest) {
     let resultat: ScanResultat;
 
     try {
-      const parsed = JSON.parse(raw) as Partial<ScanResultat>;
+      const parsedResult = JSON.parse(raw) as Partial<ScanResultat>;
       resultat = {
-        correction: parsed.correction ?? "Correction non disponible.",
-        note: parsed.note ?? "",
-        explication: parsed.explication ?? "",
-        etapes: Array.isArray(parsed.etapes) ? parsed.etapes : [],
-        conseils: Array.isArray(parsed.conseils) ? parsed.conseils : [],
+        correction: parsedResult.correction ?? "Correction non disponible.",
+        note: parsedResult.note ?? "",
+        explication: parsedResult.explication ?? "",
+        etapes: Array.isArray(parsedResult.etapes) ? parsedResult.etapes : [],
+        conseils: Array.isArray(parsedResult.conseils) ? parsedResult.conseils : [],
       };
     } catch {
       resultat = {
