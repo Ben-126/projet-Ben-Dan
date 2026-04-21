@@ -54,31 +54,37 @@ export default function DialogueLangue() {
     const API = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!API) return;
 
-    // Demande explicite de permission micro → déclenche la popup navigateur
+    const lancer = () => {
+      const rec = new API();
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.lang = langueInfo.bcp47;
+      rec.onresult = (event: SpeechRecognitionResultEvent) => {
+        const texte = event.results[0]?.[0]?.transcript ?? "";
+        if (texte) setInput((prev) => prev + (prev ? " " : "") + texte);
+      };
+      rec.onerror = () => { recognitionRef.current = null; setEcouteVocale(false); };
+      rec.onend = () => { recognitionRef.current = null; setEcouteVocale(false); };
+      recognitionRef.current = rec;
+      rec.start();
+      setEcouteVocale(true);
+    };
+
+    // Si déjà autorisé, démarrer directement
+    try {
+      const perm = await navigator.permissions.query({ name: "microphone" as PermissionName });
+      if (perm.state === "granted") { lancer(); return; }
+      if (perm.state === "denied") return;
+    } catch { /* Permissions API non dispo */ }
+
+    // Sinon, déclencher la popup via getUserMedia
     let permStream: MediaStream | null = null;
     try {
       permStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
-      return; // permission refusée, on ne démarre pas
+      return;
     }
-
-    // Nouvelle instance à chaque écoute
-    const rec = new API();
-    rec.continuous = false;
-    rec.interimResults = false;
-    rec.lang = langueInfo.bcp47;
-
-    rec.onresult = (event: SpeechRecognitionResultEvent) => {
-      const texte = event.results[0]?.[0]?.transcript ?? "";
-      if (texte) setInput((prev) => prev + (prev ? " " : "") + texte);
-    };
-    rec.onerror = () => { recognitionRef.current = null; setEcouteVocale(false); };
-    rec.onend = () => { recognitionRef.current = null; setEcouteVocale(false); };
-
-    recognitionRef.current = rec;
-    rec.start();
-    setEcouteVocale(true);
-    // Libérer le stream après le démarrage
+    lancer();
     permStream.getTracks().forEach((t) => t.stop());
   };
 
