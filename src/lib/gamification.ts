@@ -65,7 +65,7 @@ const BadgeDebloqueSchema = z.object({
 
 const ProfilGamificationSchema = z.object({
   xpTotal:                    z.number().int().min(0),
-  dernierQuizDate:            z.string().nullable(),
+  dernierQuizDate:            z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
   streakJours:                z.number().int().min(0),
   badgesDebloques:            z.array(BadgeDebloqueSchema),
   xpDuJour:                   z.number().int().min(0),
@@ -73,8 +73,8 @@ const ProfilGamificationSchema = z.object({
   gelsRestants:               z.number().int().min(0).max(3).default(3),
   gelsUtilises:               z.number().int().min(0).default(0),
   dateDerniereRechargeGels:   z.string().nullable().default(null),
-  joursJoues:                 z.array(z.string()).default([]),
-  joursGeles:                 z.array(z.string()).default([]),
+  joursJoues:                 z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).default([]),
+  joursGeles:                 z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).default([]),
 });
 
 const PROFIL_DEFAULT: ProfilGamification = {
