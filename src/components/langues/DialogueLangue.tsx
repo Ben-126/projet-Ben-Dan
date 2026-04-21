@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import type { SpeechRecognitionInstance, SpeechRecognitionResultEvent } from "./speech-types";
+import type { SpeechRecognitionInstance, SpeechRecognitionResultEvent, SpeechRecognitionErrorEvent } from "./speech-types";
 
 const LANGUES = [
   { code: "en", bcp47: "en-GB", nom: "Anglais", emoji: "🇬🇧" },
@@ -50,42 +50,34 @@ export default function DialogueLangue() {
     if (ecouteVocale) arreterEcoute();
   };
 
-  const demarrerEcoute = async () => {
+  const demarrerEcoute = () => {
     const API = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!API) return;
 
-    const lancer = () => {
-      const rec = new API();
-      rec.continuous = false;
-      rec.interimResults = false;
-      rec.lang = langueInfo.bcp47;
-      rec.onresult = (event: SpeechRecognitionResultEvent) => {
-        const texte = event.results[0]?.[0]?.transcript ?? "";
-        if (texte) setInput((prev) => prev + (prev ? " " : "") + texte);
-      };
-      rec.onerror = () => { recognitionRef.current = null; setEcouteVocale(false); };
-      rec.onend = () => { recognitionRef.current = null; setEcouteVocale(false); };
-      recognitionRef.current = rec;
-      rec.start();
-      setEcouteVocale(true);
+    const rec = new API();
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.lang = langueInfo.bcp47;
+
+    rec.onresult = (event: SpeechRecognitionResultEvent) => {
+      const texte = event.results[0]?.[0]?.transcript ?? "";
+      if (texte) setInput((prev) => prev + (prev ? " " : "") + texte);
     };
+    rec.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognitionRef.current = null;
+      setEcouteVocale(false);
+      if (event.error === "not-allowed") {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then((stream) => { stream.getTracks().forEach((t) => t.stop()); })
+          .catch(() => {});
+      }
+    };
+    rec.onend = () => { recognitionRef.current = null; setEcouteVocale(false); };
 
-    // Si déjà autorisé, démarrer directement
-    try {
-      const perm = await navigator.permissions.query({ name: "microphone" as PermissionName });
-      if (perm.state === "granted") { lancer(); return; }
-      if (perm.state === "denied") return;
-    } catch { /* Permissions API non dispo */ }
-
-    // Sinon, déclencher la popup via getUserMedia
-    let permStream: MediaStream | null = null;
-    try {
-      permStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch {
-      return;
-    }
-    lancer();
-    permStream.getTracks().forEach((t) => t.stop());
+    recognitionRef.current = rec;
+    // Synchrone dans le handler du clic
+    rec.start();
+    setEcouteVocale(true);
   };
 
   const arreterEcoute = () => {

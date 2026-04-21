@@ -38,7 +38,14 @@ export default function ReconnaissanceVocale() {
     "aborted": "Reconnaissance annulée.",
   };
 
-  const lancerReconnaissance = (API: new () => SpeechRecognitionInstance) => {
+  const demarrer = () => {
+    setErreur(null);
+    const API = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+    if (!API) {
+      setErreur("Navigateur non compatible. Utilisez Chrome ou Edge.");
+      return;
+    }
+
     const rec = new API();
     rec.continuous = true;
     rec.interimResults = true;
@@ -56,12 +63,25 @@ export default function ReconnaissanceVocale() {
       if (final) setTranscriptionFinale((prev) => prev + (prev ? " " : "") + final.trim());
       setTranscriptionVive(interim);
     };
+
     rec.onerror = (event: SpeechRecognitionErrorEvent) => {
-      const msg = MESSAGES_ERREUR[event.error] ?? `Erreur : ${event.error}`;
-      setErreur(msg);
       recognitionRef.current = null;
       setEnCours(false);
+      if (event.error === "not-allowed") {
+        // Demander la permission micro puis inviter à recliquer
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then((stream) => {
+            stream.getTracks().forEach((t) => t.stop());
+            setErreur("Permission accordée ! Cliquez à nouveau sur le bouton.");
+          })
+          .catch(() => {
+            setErreur("Microphone refusé. Cliquez sur 🔒 → Microphone → Autoriser, puis rechargez.");
+          });
+      } else if (event.error !== "aborted") {
+        setErreur(MESSAGES_ERREUR[event.error] ?? `Erreur : ${event.error}`);
+      }
     };
+
     rec.onend = () => {
       recognitionRef.current = null;
       setEnCours(false);
@@ -69,49 +89,9 @@ export default function ReconnaissanceVocale() {
     };
 
     recognitionRef.current = rec;
+    // Appel synchrone dans le handler du clic — conserve le contexte "user gesture"
     rec.start();
     setEnCours(true);
-  };
-
-  const demarrer = async () => {
-    setErreur(null);
-    const API = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    if (!API) {
-      setErreur("Navigateur non compatible. Utilisez Chrome ou Edge.");
-      return;
-    }
-
-    // Vérifier l'état de la permission micro via l'API Permissions
-    try {
-      const perm = await navigator.permissions.query({ name: "microphone" as PermissionName });
-
-      if (perm.state === "denied") {
-        setErreur("Microphone bloqué. Cliquez sur 🔒 dans la barre d'adresse → Microphone → Autoriser, puis rechargez.");
-        return;
-      }
-
-      if (perm.state === "granted") {
-        // Déjà autorisé : démarrer directement sans getUserMedia
-        lancerReconnaissance(API);
-        return;
-      }
-    } catch {
-      // Permissions API non dispo, on continue avec getUserMedia
-    }
-
-    // Permission "prompt" : déclencher la popup via getUserMedia
-    let permStream: MediaStream | null = null;
-    try {
-      permStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch {
-      setErreur("Microphone refusé. Cliquez sur 🔒 → Microphone → Autoriser, puis rechargez.");
-      return;
-    }
-
-    // Démarrer la reconnaissance pendant que le stream est encore actif
-    lancerReconnaissance(API);
-    // Libérer le stream getUserMedia après le démarrage
-    permStream.getTracks().forEach((t) => t.stop());
   };
 
   const changerLangue = (code: string) => {
