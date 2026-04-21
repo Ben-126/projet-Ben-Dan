@@ -79,6 +79,14 @@ export default function Header() {
             <span className="hidden sm:inline">Scan</span>
           </Link>
 
+          <Link
+            href="/langues"
+            className="text-sm text-gray-600 hover:text-indigo-600 font-medium px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors flex items-center gap-1.5"
+          >
+            <span>🌍</span>
+            <span className="hidden sm:inline">Langues</span>
+          </Link>
+
           {user && (
             <Link
               href="/social"
