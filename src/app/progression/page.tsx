@@ -8,6 +8,14 @@ import GraphiqueEvolution from "@/components/progression/GraphiqueEvolution";
 import HistoriqueQuiz from "@/components/progression/HistoriqueQuiz";
 import PredictionNote from "@/components/progression/PredictionNote";
 import BadgeGrid from "@/components/gamification/BadgeGrid";
+import StreakDisplay from "@/components/gamification/StreakDisplay";
+import CalendrierStreak from "@/components/gamification/CalendrierStreak";
+import {
+  getNotificationsStreak,
+  marquerNotifsStreakLues,
+  notifsStreakDejaMontrees,
+  type NotifStreak,
+} from "@/lib/streak-notifications";
 import { NIVEAUX, type Niveau } from "@/data/programmes";
 import { getToutesPerformances, type PerformanceChapitre } from "@/lib/performance";
 import { getHistorique, type EntreeHistorique } from "@/lib/history";
@@ -30,11 +38,18 @@ export default function ProgressionPage() {
   const [performances, setPerformances] = useState<Record<string, PerformanceChapitre>>({});
   const [mounted, setMounted] = useState(false);
   const [profilGami, setProfilGami] = useState<ProfilGamification | null>(null);
+  const [notifsStreak, setNotifsStreak] = useState<NotifStreak[]>([]);
 
   useEffect(() => {
     setHistorique(getHistorique());
     setPerformances(getToutesPerformances());
-    setProfilGami(getProfilGamification());
+    const profil = getProfilGamification();
+    setProfilGami(profil);
+    if (!notifsStreakDejaMontrees()) {
+      const notifs = getNotificationsStreak(profil);
+      setNotifsStreak(notifs);
+      if (notifs.length > 0) marquerNotifsStreakLues();
+    }
     setMounted(true);
   }, []);
 
@@ -177,13 +192,27 @@ export default function ProgressionPage() {
                 </div>
               </div>
 
-              {/* Streak */}
-              {profilGami.streakJours > 0 && (
-                <div className="flex items-center gap-2 text-sm text-orange-600 font-medium">
-                  <span>🔥</span>
-                  <span>Série de {profilGami.streakJours} jour{profilGami.streakJours > 1 ? "s" : ""} consécutif{profilGami.streakJours > 1 ? "s" : ""}</span>
+              {/* Notifications streak */}
+              {notifsStreak.map((notif, i) => (
+                <div
+                  key={i}
+                  className={`flex gap-3 p-3 rounded-xl text-sm border ${
+                    notif.type === "streak_rappel"
+                      ? "bg-orange-50 border-orange-200 text-orange-800"
+                      : notif.type === "streak_gel_utilise"
+                      ? "bg-blue-50 border-blue-200 text-blue-800"
+                      : "bg-red-50 border-red-200 text-red-800"
+                  }`}
+                >
+                  <div>
+                    <p className="font-semibold">{notif.message}</p>
+                    <p className="text-xs mt-0.5 opacity-80">{notif.detail}</p>
+                  </div>
                 </div>
-              )}
+              ))}
+
+              {/* StreakDisplay */}
+              <StreakDisplay profil={profilGami} />
 
               {/* Badges */}
               <div>
@@ -192,6 +221,9 @@ export default function ProgressionPage() {
                 </p>
                 <BadgeGrid allBadges={tousLesBadges} debloques={profilGami.badgesDebloques} />
               </div>
+
+              {/* Calendrier streak */}
+              <CalendrierStreak profil={profilGami} />
             </div>
           );
         })()}
