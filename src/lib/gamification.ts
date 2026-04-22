@@ -394,15 +394,3 @@ export function enregistrerQuizGamification(params: {
 }
 
 export const GEL_PAR_MOIS = 3;
-
-export function getInfosGel(profil: ProfilGamification): {
-  gelsRestants: number;
-  gelsUtilises: number;
-  pourcentageUtilise: number;
-} {
-  return {
-    gelsRestants: profil.gelsRestants,
-    gelsUtilises: profil.gelsUtilises,
-    pourcentageUtilise: Math.round((profil.gelsUtilises / GEL_PAR_MOIS) * 100),
-  };
-}

@@ -1,4 +1,4 @@
-import type { ProfilGamification } from "@/types";
+import type { ProfilGamification, TypeNotification } from "@/types";
 
 const NOTIF_STORAGE_KEY = "streak-notif-derniere-date";
 
@@ -12,13 +12,8 @@ function hierISO(aujourd: string): string {
   return d.toISOString().slice(0, 10);
 }
 
-export type TypeNotifStreak =
-  | "streak_rappel"
-  | "streak_perdu"
-  | "streak_gel_utilise";
-
 export interface NotifStreak {
-  type: TypeNotifStreak;
+  type: Extract<TypeNotification, "streak_rappel" | "streak_perdu" | "streak_gel_utilise">;
   message: string;
   detail: string;
 }
