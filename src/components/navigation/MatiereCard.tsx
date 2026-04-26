@@ -11,16 +11,61 @@ export default function MatiereCard({ matiere, niveau }: MatiereCardProps) {
     <Link
       href={`/${niveau}/${matiere.slug}`}
       data-testid="matiere-card"
-      className="group block rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 bg-white border border-gray-100"
+      style={{
+        display: "block",
+        textDecoration: "none",
+        background: "var(--card)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--r-lg)",
+        overflow: "hidden",
+        transition: "transform .2s, border-color .2s, box-shadow .2s",
+      }}
+      onMouseEnter={(e) => {
+        const el = e.currentTarget as HTMLAnchorElement;
+        el.style.transform = "translateY(-3px)";
+        el.style.borderColor = "rgba(77,94,232,0.28)";
+        el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.3)";
+      }}
+      onMouseLeave={(e) => {
+        const el = e.currentTarget as HTMLAnchorElement;
+        el.style.transform = "translateY(0)";
+        el.style.borderColor = "var(--border)";
+        el.style.boxShadow = "none";
+      }}
     >
-      <div className={`${matiere.couleur} p-4 flex items-center justify-center`}>
-        <span className="text-4xl" role="img" aria-label={matiere.nom}>{matiere.emoji}</span>
+      {/* Zone emoji */}
+      <div style={{
+        padding: "20px 8px 16px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(77,94,232,0.06)",
+        borderBottom: "1px solid var(--border)",
+      }}>
+        <span style={{ fontSize: "2rem" }} role="img" aria-label={matiere.nom}>
+          {matiere.emoji}
+        </span>
       </div>
-      <div className="p-3 text-center">
-        <h2 className="font-semibold text-gray-800 text-sm leading-tight group-hover:text-indigo-700 transition-colors">
+
+      {/* Infos */}
+      <div style={{ padding: "10px 10px 12px", textAlign: "center" }}>
+        <h2 style={{
+          fontFamily: "var(--f-head)",
+          fontWeight: 800,
+          fontSize: "0.82rem",
+          color: "var(--text)",
+          lineHeight: 1.3,
+          marginBottom: 4,
+        }}>
           {matiere.nom}
         </h2>
-        <p className="text-xs text-gray-400 mt-1">{matiere.chapitres.length} chapitres</p>
+        <p style={{
+          fontFamily: "var(--f-body)",
+          fontSize: "0.72rem",
+          color: "var(--text3)",
+        }}>
+          {matiere.chapitres.length} chapitres
+        </p>
       </div>
     </Link>
   );
