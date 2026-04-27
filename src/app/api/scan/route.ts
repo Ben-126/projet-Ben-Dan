@@ -125,7 +125,9 @@ export async function POST(req: NextRequest) {
       ],
     });
 
-    const raw = response.choices[0]?.message?.content ?? "{}";
+    const rawContent = response.choices[0]?.message?.content ?? "{}";
+    // Supprimer les blocs markdown (```json ... ``` ou ``` ... ```)
+    const raw = rawContent.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
     let resultat: ScanResultat;
 
     try {
@@ -139,11 +141,11 @@ export async function POST(req: NextRequest) {
       };
     } catch {
       resultat = {
-        correction: raw,
+        correction: "La correction n'a pas pu être analysée correctement. Réessaie avec une photo plus nette.",
         note: "",
         explication: "",
         etapes: [],
-        conseils: [],
+        conseils: ["Assure-toi que l'exercice est bien lisible sur la photo", "Évite les reflets et le flou"],
       };
     }
 
