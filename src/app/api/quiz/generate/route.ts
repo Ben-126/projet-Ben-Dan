@@ -72,12 +72,12 @@ export async function POST(req: NextRequest) {
 
   const niveauLabel = niveauLycee === "premiere" ? "Première" : niveauLycee === "terminale" ? "Terminale" : "Seconde";
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
 
   if (apiKey) {
     try {
       const { default: OpenAI } = await import("openai");
-      const client = new OpenAI({ apiKey });
+      const client = new OpenAI({ apiKey, baseURL: "https://api.groq.com/openai/v1" });
       const competences = chapitre.competences.map((c) => c.titre).join(", ");
 
       const niveauInstruction = niveau === "debutant"
@@ -165,7 +165,7 @@ Réponds UNIQUEMENT avec un JSON valide, sans texte avant ou après :
 }`;
 
       const completion = await client.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "llama-3.3-70b-versatile",
         max_tokens: MAX_TOKENS_GENERATION,
         messages: [{ role: "user", content: prompt }],
       });

@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
   const { messages, context } = parsed.data;
 
   // Fallback local si pas de clé API
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     const reponse = repondreLocalement(messages, context);
     return new Response(reponse, {
@@ -106,10 +106,10 @@ Règles :
 
   try {
     const { default: OpenAI } = await import("openai");
-    const client = new OpenAI({ apiKey });
+    const client = new OpenAI({ apiKey, baseURL: "https://api.groq.com/openai/v1" });
 
     const stream = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.3-70b-versatile",
       max_tokens: 500,
       messages: [
         { role: "system", content: systemPrompt },

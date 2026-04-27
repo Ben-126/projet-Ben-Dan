@@ -85,8 +85,8 @@ export async function POST(req: NextRequest) {
 
   const { image, mimeType, matiere, niveau } = parsed.data;
 
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey || !apiKey.startsWith("sk-")) {
+  const apiKey = process.env.GROQ_API_KEY?.trim();
+  if (!apiKey || !apiKey.startsWith("gsk_")) {
     return Response.json(fallbackSansApiKey());
   }
 
@@ -102,10 +102,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const { default: OpenAI } = await import("openai");
-    const client = new OpenAI({ apiKey });
+    const client = new OpenAI({ apiKey, baseURL: "https://api.groq.com/openai/v1" });
 
     const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
       max_tokens: 1000,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
@@ -123,7 +123,6 @@ export async function POST(req: NextRequest) {
           ],
         },
       ],
-      response_format: { type: "json_object" },
     });
 
     const raw = response.choices[0]?.message?.content ?? "{}";

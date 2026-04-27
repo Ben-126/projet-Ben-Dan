@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
 
   const { question, reponseCorrecte, reponseUser, explication } = parsed.data;
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
 
   if (!apiKey) {
     const niveau = verifierLocalReponse(reponseUser, reponseCorrecte);
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const { default: OpenAI } = await import("openai");
-    const client = new OpenAI({ apiKey });
+    const client = new OpenAI({ apiKey, baseURL: "https://api.groq.com/openai/v1" });
 
     const safeQuestion = sanitizeForPrompt(question);
     const safeReponseCorrecte = sanitizeForPrompt(reponseCorrecte);
@@ -128,7 +128,7 @@ Explication : ${safeExplication}
 Réponse de l'élève : ${safeReponseUser}`;
 
     const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.3-70b-versatile",
       max_tokens: 300,
       messages: [
         { role: "system", content: systemPrompt },

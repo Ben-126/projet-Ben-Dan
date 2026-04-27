@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
   const { messages, langue, niveau } = parsed.data;
   const nomLangue = NOMS_LANGUES[langue];
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return new Response(repondreLocalement(messages, langue), {
       headers: { "Content-Type": "text/plain; charset=utf-8", "X-Mode": "local" },
@@ -124,10 +124,10 @@ Règles STRICTES :
 
   try {
     const { default: OpenAI } = await import("openai");
-    const client = new OpenAI({ apiKey });
+    const client = new OpenAI({ apiKey, baseURL: "https://api.groq.com/openai/v1" });
 
     const stream = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.3-70b-versatile",
       max_tokens: 300,
       messages: [
         { role: "system", content: systemPrompt },

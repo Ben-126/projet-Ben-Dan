@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { question, reponseCorrecte, explication, matiere } = parsed.data;
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
 
   if (!apiKey) {
     return NextResponse.json(
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const { default: OpenAI } = await import("openai");
-    const client = new OpenAI({ apiKey });
+    const client = new OpenAI({ apiKey, baseURL: "https://api.groq.com/openai/v1" });
 
     const systemPrompt = `Tu es un professeur bienveillant qui aide un élève qui n'a pas compris. Explique le concept de manière très simple, comme si l'élève avait 12 ans. Utilise des mots simples, des exemples concrets du quotidien et une analogie si possible. Réponds en JSON uniquement.
 
@@ -84,7 +84,7 @@ Explication officielle : ${sanitize(explication)}
 Reformule cette explication en langage très simple pour un élève débutant.`;
 
     const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "llama-3.3-70b-versatile",
       max_tokens: 400,
       messages: [
         { role: "system", content: systemPrompt },

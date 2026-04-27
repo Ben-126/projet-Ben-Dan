@@ -73,21 +73,21 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Langue non supportée." }, { status: 400 });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return Response.json({
       transcrit: "",
       similitude: 0,
       mots: comparerMots(texte, texte),
       feedback:
-        "Clé API OpenAI non configurée. Ajoutez OPENAI_API_KEY dans votre fichier .env.local pour activer la correction de prononciation.",
+        "Clé API Groq non configurée. Ajoutez GROQ_API_KEY dans votre fichier .env.local pour activer la correction de prononciation.",
       modeLocal: true,
     });
   }
 
   try {
     const { default: OpenAI } = await import("openai");
-    const client = new OpenAI({ apiKey });
+    const client = new OpenAI({ apiKey, baseURL: "https://api.groq.com/openai/v1" });
 
     const audioFile = new File([audio], "audio.webm", {
       type: audio.type || "audio/webm",
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
 
     const transcription = await client.audio.transcriptions.create({
       file: audioFile,
-      model: "whisper-1",
+      model: "whisper-large-v3-turbo",
       language: codeWhisper,
       prompt: texte,
     });
@@ -122,7 +122,7 @@ Légères différences : ${erreurs || "minimes"}
 Donne un feedback de prononciation bienveillant et court (2-3 phrases en français) avec des conseils concrets.`;
 
       const res = await client.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "llama-3.3-70b-versatile",
         max_tokens: 120,
         messages: [{ role: "user", content: prompt }],
       });
@@ -141,7 +141,7 @@ Erreurs de prononciation : ${erreurs || "nombreuses"}
 Donne un feedback constructif (3-4 phrases en français), identifie les principales erreurs et donne des conseils pratiques.`;
 
       const res = await client.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "llama-3.3-70b-versatile",
         max_tokens: 150,
         messages: [{ role: "user", content: prompt }],
       });
