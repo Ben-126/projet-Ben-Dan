@@ -9,6 +9,22 @@ import {
   type Parametres,
   type QuestionsParQuiz,
 } from "@/lib/parametres";
+import {
+  getObjectifsNote,
+  ajouterObjectifNote,
+  supprimerObjectifNote,
+  getProgressionsObjectifsNote,
+  type ObjectifNote,
+  type ProgressionObjectifNote,
+} from "@/lib/objectifs-personnalises";
+import { NIVEAUX } from "@/data/programmes";
+
+// Liste de toutes les matières uniques (sans doublons) de tous les niveaux
+const TOUTES_MATIERES = Array.from(
+  new Map(
+    NIVEAUX.flatMap((n) => n.matieres).map((m) => [m.slug, m])
+  ).values()
+);
 
 export default function ParametresPage() {
   const [params, setParams] = useState<Parametres>(PARAMETRES_DEFAUT);
@@ -18,8 +34,18 @@ export default function ParametresPage() {
   const [sauvegarde, setSauvegarde] = useState(false);
   const timerSauvegarde = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Objectifs personnalisés
+  const [progressionsObjectifs, setProgressionsObjectifs] = useState<ProgressionObjectifNote[]>([]);
+  const [formMatiereSlug, setFormMatiereSlug] = useState(TOUTES_MATIERES[0]?.slug ?? "");
+  const [formNote, setFormNote] = useState(15);
+
+  function rafraichirObjectifs() {
+    setProgressionsObjectifs(getProgressionsObjectifsNote());
+  }
+
   useEffect(() => {
     setParams(getParametres());
+    rafraichirObjectifs();
     setMounted(true);
     if (!("Notification" in window)) {
       setNotifStatut("non-supporte");
@@ -305,6 +331,98 @@ export default function ParametresPage() {
               />
             </button>
           </div>
+        </section>
+
+        {/* Objectifs personnalisés */}
+        <section style={sectionStyle}>
+          <h2 style={{ fontWeight: 700, color: "var(--text)" }}>🏆 Objectifs personnalisés</h2>
+          <p style={{ fontSize: 13, color: "var(--text3)" }}>
+            Définis une note cible à atteindre dans une matière. La progression est calculée sur tes 10 derniers quiz.
+          </p>
+
+          {/* Formulaire d'ajout */}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1, minWidth: 140 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Matière</label>
+              <select
+                value={formMatiereSlug}
+                onChange={(e) => setFormMatiereSlug(e.target.value)}
+                style={{ padding: "7px 10px", borderRadius: "var(--r-sm)", border: "1px solid var(--border2)", background: "var(--bg2)", color: "var(--text)", fontSize: 13, cursor: "pointer" }}
+              >
+                {TOUTES_MATIERES.map((m) => (
+                  <option key={m.slug} value={m.slug}>{m.emoji} {m.nom}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Note cible /20</label>
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={formNote}
+                onChange={(e) => setFormNote(Math.min(20, Math.max(1, Number(e.target.value))))}
+                style={{ width: 70, padding: "7px 10px", borderRadius: "var(--r-sm)", border: "1px solid var(--border2)", background: "var(--bg2)", color: "var(--text)", fontSize: 13, textAlign: "center" }}
+              />
+            </div>
+
+            <button
+              onClick={() => {
+                const matiere = TOUTES_MATIERES.find((m) => m.slug === formMatiereSlug);
+                if (!matiere) return;
+                ajouterObjectifNote(formMatiereSlug, matiere.nom, formNote);
+                rafraichirObjectifs();
+              }}
+              style={{ padding: "8px 16px", background: "var(--indigo)", color: "#fff", fontSize: 13, fontWeight: 600, borderRadius: "var(--r-md)", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+            >
+              + Ajouter
+            </button>
+          </div>
+
+          {/* Liste des objectifs */}
+          {progressionsObjectifs.length === 0 ? (
+            <p style={{ fontSize: 13, color: "var(--text3)", fontStyle: "italic" }}>Aucun objectif défini.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {progressionsObjectifs.map(({ objectif, noteMoyenne, atteint, nombreQuiz }: ProgressionObjectifNote) => {
+                const pourcentage = noteMoyenne !== null ? Math.min(100, Math.round((noteMoyenne / objectif.noteVoulue) * 100)) : 0;
+                const couleur = atteint ? "var(--teal)" : pourcentage >= 60 ? "var(--amber)" : "var(--coral-l)";
+                const matiere = TOUTES_MATIERES.find((m) => m.slug === objectif.matiereSlug);
+                return (
+                  <div key={objectif.id} style={{ background: "rgba(255,255,255,0.03)", borderRadius: "var(--r-md)", border: "1px solid var(--border)", padding: "12px 14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 18 }}>{matiere?.emoji ?? "📚"}</span>
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{objectif.matiereName}</p>
+                          <p style={{ fontSize: 11, color: "var(--text3)" }}>Objectif : {objectif.noteVoulue}/20</p>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 15, fontWeight: 800, color: couleur }}>
+                          {noteMoyenne !== null ? `${noteMoyenne}/20` : "—"}
+                        </span>
+                        <button
+                          onClick={() => { supprimerObjectifNote(objectif.id); rafraichirObjectifs(); }}
+                          style={{ fontSize: 16, background: "none", border: "none", color: "var(--text3)", cursor: "pointer", padding: "2px 6px", borderRadius: "var(--r-sm)" }}
+                          aria-label="Supprimer l'objectif"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{ height: 4, background: "rgba(255,255,255,0.07)", borderRadius: 4, overflow: "hidden" }}>
+                      <div style={{ height: "100%", borderRadius: 4, width: `${pourcentage}%`, background: atteint ? "var(--teal)" : `linear-gradient(90deg, var(--indigo) 0%, ${couleur} 100%)`, transition: "width .5s ease" }} />
+                    </div>
+                    <p style={{ fontSize: 11, color: "var(--text3)", marginTop: 6 }}>
+                      {nombreQuiz === 0 ? "Aucun quiz effectué dans cette matière" : atteint ? "✓ Objectif atteint !" : `Basé sur ${Math.min(nombreQuiz, 10)} quiz`}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         {/* Danger Zone */}

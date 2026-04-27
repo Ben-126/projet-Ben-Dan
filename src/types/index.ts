@@ -81,7 +81,7 @@ export interface ResultatQuiz {
   reponses: ReponseUtilisateur[];
 }
 
-export type ModeQuiz = "entrainement" | "controle" | "chrono";
+export type ModeQuiz = "entrainement" | "controle" | "chrono" | "rapide";
 
 export interface BadgeDebloque {
   id: string;

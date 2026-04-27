@@ -16,7 +16,7 @@ export default function ModeSelector({ titreChapitre, onSelectMode }: ModeSelect
         <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text)" }}>Choisir un mode</h2>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Mode Entraînement */}
         <button
           onClick={() => onSelectMode("entrainement")}
@@ -82,6 +82,30 @@ export default function ModeSelector({ titreChapitre, onSelectMode }: ModeSelect
           <div className="flex flex-wrap justify-center gap-1 mt-1">
             <span style={{ fontSize: 10, fontWeight: 500, padding: "2px 8px", borderRadius: "var(--r-pill)", background: "rgba(245,200,64,0.1)", color: "var(--amber)" }}>
               30s par question
+            </span>
+          </div>
+        </button>
+
+        {/* Mode Quiz rapide */}
+        <button
+          onClick={() => onSelectMode("rapide")}
+          data-testid="btn-mode-rapide"
+          className="group relative flex flex-col items-center text-center gap-3 p-6 rounded-2xl transition-all duration-200"
+          style={{ border: "2px solid rgba(61,214,191,0.3)", background: "var(--card)", boxShadow: "0 4px 16px rgba(0,0,0,0.3)", cursor: "pointer" }}
+        >
+          <span className="text-4xl">🚀</span>
+          <div>
+            <p style={{ fontWeight: 700, color: "var(--text)", fontSize: 16 }}>Quiz rapide</p>
+            <p style={{ fontSize: 12, color: "var(--text3)", marginTop: 4, lineHeight: 1.5 }}>
+              5 questions · ~1 minute · Idéal pour une révision express
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-1 mt-1">
+            <span style={{ fontSize: 10, fontWeight: 500, padding: "2px 8px", borderRadius: "var(--r-pill)", background: "rgba(61,214,191,0.1)", color: "var(--teal)" }}>
+              5 questions
+            </span>
+            <span style={{ fontSize: 10, fontWeight: 500, padding: "2px 8px", borderRadius: "var(--r-pill)", background: "rgba(61,214,191,0.08)", color: "var(--teal)" }}>
+              ~1 min
             </span>
           </div>
         </button>

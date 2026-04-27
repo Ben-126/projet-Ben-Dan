@@ -2,12 +2,15 @@
 "use client";
 import { useState, useEffect } from "react";
 import { getProgressionObjectif, type ProgressionObjectif } from "@/lib/objectif";
+import { getProgressionsObjectifsNote, type ProgressionObjectifNote } from "@/lib/objectifs-personnalises";
 
 export default function BanniereObjectif() {
   const [progression, setProgression] = useState<ProgressionObjectif | null>(null);
+  const [progressionsNote, setProgressionsNote] = useState<ProgressionObjectifNote[]>([]);
 
   useEffect(() => {
     setProgression(getProgressionObjectif());
+    setProgressionsNote(getProgressionsObjectifsNote());
   }, []);
 
   if (!progression) return null;
@@ -81,6 +84,31 @@ export default function BanniereObjectif() {
       <p style={{ fontFamily: "var(--f-body)", fontSize: "0.78rem", color: "var(--text3)" }}>
         {message}
       </p>
+
+      {/* Objectifs personnalisés de note */}
+      {progressionsNote.length > 0 && (
+        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
+          {progressionsNote.map(({ objectif, noteMoyenne, atteint }) => {
+            const pourcentage = noteMoyenne !== null ? Math.min(100, Math.round((noteMoyenne / objectif.noteVoulue) * 100)) : 0;
+            const couleur = atteint ? "var(--teal)" : pourcentage >= 60 ? "var(--amber)" : "var(--coral-l)";
+            return (
+              <div key={objectif.id}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontFamily: "var(--f-head)", fontWeight: 600, fontSize: "0.72rem", color: couleur }}>
+                    🏆 {objectif.matiereName} — objectif {objectif.noteVoulue}/20
+                  </span>
+                  <span style={{ fontFamily: "var(--f-head)", fontWeight: 800, fontSize: "0.72rem", color: "var(--text2)" }}>
+                    {noteMoyenne !== null ? `${noteMoyenne}/20` : "—"}
+                  </span>
+                </div>
+                <div style={{ height: 3, background: "rgba(255,255,255,0.07)", borderRadius: 2, overflow: "hidden" }}>
+                  <div style={{ height: "100%", borderRadius: 2, width: `${pourcentage}%`, background: atteint ? "var(--teal)" : couleur, transition: "width .5s ease" }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

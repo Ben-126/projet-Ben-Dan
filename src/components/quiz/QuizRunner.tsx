@@ -22,6 +22,7 @@ type EtatQuiz = "selection_mode" | "chargement" | "question" | "verification" | 
 
 const MATIERES_AVEC_CLAVIER_MATH = new Set(["mathematiques", "physique-chimie", "svt", "snt"]);
 const QUESTIONS_PAR_CONTROLE = 10;
+const QUESTIONS_PAR_RAPIDE = 5;
 const SECONDES_PAR_QUESTION_CONTROLE = 20;
 
 interface QuizRunnerProps {
@@ -107,7 +108,10 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
     const performance = getPerformance(matiereSlug, chapitreSlug);
     const niveauActuel = getNiveau(performance);
     setNiveau(niveauActuel);
-    const questionsParQuiz = mode === "controle" ? QUESTIONS_PAR_CONTROLE : getParametres().questionsParQuiz;
+    const questionsParQuiz =
+      mode === "controle" ? QUESTIONS_PAR_CONTROLE :
+      mode === "rapide" ? QUESTIONS_PAR_RAPIDE :
+      getParametres().questionsParQuiz;
 
     const body: Record<string, unknown> = { matiereSlug, chapitreSlug, niveau: niveauActuel, niveauLycee, questionsParQuiz };
     if (revisionConfig?.actif && revisionConfig.questionsRatees.length > 0) {
@@ -404,7 +408,7 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
         onChoisirMode={() => {
           setEtat("selection_mode");
         }}
-        onReviserErreurs={modeQuiz === "entrainement" && questionsRateesQuiz.length > 0 ? handleReviserErreurs : undefined}
+        onReviserErreurs={(modeQuiz === "entrainement" || modeQuiz === "rapide") && questionsRateesQuiz.length > 0 ? handleReviserErreurs : undefined}
       />
     );
   }
@@ -445,7 +449,7 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
         </div>
       )}
 
-      {(etiquetteNiveau || modeRevision.actif) && modeQuiz === "entrainement" && (
+      {(etiquetteNiveau || modeRevision.actif || modeQuiz === "rapide") && (modeQuiz === "entrainement" || modeQuiz === "rapide") && (
         <div className="flex gap-2 flex-wrap">
           {etiquetteNiveau && (
             <span style={{
@@ -462,6 +466,11 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
           {modeRevision.actif && (
             <span style={{ fontSize: 12, fontWeight: 600, padding: "4px 8px", borderRadius: "var(--r-pill)", background: "rgba(245,200,64,0.1)", color: "var(--amber)" }}>
               Mode révision
+            </span>
+          )}
+          {modeQuiz === "rapide" && !modeRevision.actif && (
+            <span style={{ fontSize: 12, fontWeight: 600, padding: "4px 8px", borderRadius: "var(--r-pill)", background: "rgba(61,214,191,0.1)", color: "var(--teal)" }}>
+              🚀 Quiz rapide · 5 questions
             </span>
           )}
         </div>
@@ -516,12 +525,13 @@ export default function QuizRunner({ matiereSlug, chapitreSlug, titreChapitre, n
             feedbackDetaille={derniereReponse.feedbackDetaille}
             onSuivant={handleSuivant}
             estDerniere={questionIndex + 1 >= questions.length}
+            matiere={matiereName}
           />
         </div>
       )}
 
-      {/* Coach IA flottant — disponible pendant le quiz en mode entraînement */}
-      {modeQuiz === "entrainement" && (etat === "question" || etat === "correction") && (
+      {/* Coach IA flottant — disponible pendant le quiz en mode entraînement et rapide */}
+      {(modeQuiz === "entrainement" || modeQuiz === "rapide") && (etat === "question" || etat === "correction") && (
         <CoachIA
           matiere={matiereName}
           chapitre={titreChapitre}

@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import type { Question, NiveauCorrection, FeedbackDetaille } from "@/types";
 import { getParametres } from "@/lib/parametres";
 import ExplicationAvancee from "./ExplicationAvancee";
@@ -12,6 +13,7 @@ interface CorrectionDisplayProps {
   feedbackDetaille?: FeedbackDetaille;
   onSuivant: () => void;
   estDerniere: boolean;
+  matiere?: string;
 }
 
 function getLibelleReponse(question: Question, reponse: string | boolean): string {
@@ -73,7 +75,36 @@ export default function CorrectionDisplay({
   feedbackDetaille,
   onSuivant,
   estDerniere,
+  matiere,
 }: CorrectionDisplayProps) {
+  const [explicationSimplifiee, setExplicationSimplifiee] = useState<string | null>(null);
+  const [analogie, setAnalogie] = useState<string | null>(null);
+  const [chargementSimplify, setChargementSimplify] = useState(false);
+
+  async function handlePasCompris() {
+    if (chargementSimplify || explicationSimplifiee) return;
+    setChargementSimplify(true);
+    try {
+      const res = await fetch("/api/quiz/simplify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: question.question,
+          reponseCorrecte: question.reponseCorrecte,
+          explication: question.explication,
+          matiere,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { explicationSimplifiee: string; analogie: string | null };
+        setExplicationSimplifiee(data.explicationSimplifiee);
+        setAnalogie(data.analogie);
+      }
+    } finally {
+      setChargementSimplify(false);
+    }
+  }
+
   const libelleUser = getLibelleReponse(question, reponseUtilisateur);
   const libelleBonne = getLibelleBonneReponse(question);
   const { explicationsAvanceesOuvertes } = getParametres();
@@ -169,6 +200,45 @@ export default function CorrectionDisplay({
         explicationAvancee={question.explicationAvancee}
         defaultExpanded={!correcte || explicationsAvanceesOuvertes}
       />
+
+      {/* Bouton "Je n'ai pas compris" — visible uniquement si réponse incorrecte ou partielle */}
+      {niveauCorrection !== "correct" && !explicationSimplifiee && (
+        <button
+          onClick={handlePasCompris}
+          disabled={chargementSimplify}
+          data-testid="btn-pas-compris"
+          className="w-full py-3 rounded-xl font-semibold"
+          style={{
+            background: "rgba(77,94,232,0.08)",
+            border: "1px solid rgba(77,94,232,0.25)",
+            color: "var(--indigo-l)",
+            cursor: chargementSimplify ? "wait" : "pointer",
+            fontSize: 14,
+          }}
+        >
+          {chargementSimplify ? "Génération en cours..." : "🤔 Je n'ai pas compris — Explique-moi simplement"}
+        </button>
+      )}
+
+      {/* Explication simplifiée */}
+      {explicationSimplifiee && (
+        <div
+          className="rounded-xl p-4 space-y-3"
+          style={{ background: "rgba(77,94,232,0.06)", border: "1px solid rgba(77,94,232,0.2)" }}
+          data-testid="explication-simplifiee"
+        >
+          <p style={{ fontSize: 12, fontWeight: 700, color: "var(--indigo-l)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            🧩 Explication simplifiée
+          </p>
+          <p style={{ fontSize: 14, color: "var(--text)", lineHeight: 1.65 }}>{explicationSimplifiee}</p>
+          {analogie && (
+            <div className="rounded-lg p-3" style={{ background: "rgba(61,214,191,0.06)", border: "1px solid rgba(61,214,191,0.15)" }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: "var(--teal)", marginBottom: 4 }}>💡 Analogie</p>
+              <p style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>{analogie}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <button
         onClick={onSuivant}
