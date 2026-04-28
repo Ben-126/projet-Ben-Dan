@@ -45,9 +45,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
+  const enc = (s: string) => s.split("/").map(encodeURIComponent).join("/");
+
   const matierePages: MetadataRoute.Sitemap = NIVEAUX.flatMap((niveau) =>
     niveau.matieres.map((matiere) => ({
-      url: `${BASE_URL}/${niveau.slug}/${matiere.slug}`,
+      url: `${BASE_URL}/${enc(niveau.slug)}/${enc(matiere.slug)}`,
       lastModified: now,
       changeFrequency: "monthly" as const,
       priority: 0.8,
@@ -57,7 +59,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const chapitrePages: MetadataRoute.Sitemap = NIVEAUX.flatMap((niveau) =>
     niveau.matieres.flatMap((matiere) =>
       matiere.chapitres.map((chapitre) => ({
-        url: `${BASE_URL}/${niveau.slug}/${matiere.slug}/${chapitre.slug}`,
+        url: `${BASE_URL}/${enc(niveau.slug)}/${enc(matiere.slug)}/${enc(chapitre.slug)}`,
         lastModified: now,
         changeFrequency: "monthly" as const,
         priority: 0.7,
