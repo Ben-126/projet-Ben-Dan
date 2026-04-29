@@ -1,7 +1,7 @@
 # DPIA — Analyse d'Impact sur la Protection des Données (AIPD)
 ## Révioria — Plateforme de quiz éducatif
 
-**Version :** 1.0
+**Version :** 1.1
 **Date :** 29 avril 2026
 **Responsable du traitement :** Ben Podrojsky — benpodrojsky@gmail.com
 **Mise à jour requise si :** introduction de publicités, changement de sous-traitant, nouveau traitement de données biométriques
@@ -59,9 +59,11 @@ Cette DPIA est réalisée à titre préventif en raison de :
 |-------|--------|
 | **Finalité** | Analyser la prononciation d'un mot ou phrase |
 | **Données** | Enregistrement audio (voix), IP |
-| **Base légale** | Consentement explicite (art. 6.1.a RGPD) |
+| **Base légale** | Consentement **spécifique et distinct** (art. 6.1.a RGPD) — panneau affiché avant la 1re utilisation, stocké dans `audio-groq-consent` localStorage |
 | **Destinataires** | Groq/Whisper (USA) — CCT |
 | **Durée** | Traitement immédiat — non stocké |
+| **Alternative sans audio** | Affichée si consentement refusé |
+| **Retrait** | Possible depuis l'interface ou la page Paramètres |
 | **Risque** | Données potentiellement biométriques (voix) |
 
 ### Traitement E — Stockage local (localStorage)
@@ -186,12 +188,15 @@ Cette DPIA est réalisée à titre préventif en raison de :
 | Validation des entrées (Zod) | ✅ Implémenté |
 | Rate limiting par IP (Upstash) | ✅ Implémenté |
 | Consentement avant stockage localStorage | ✅ Implémenté |
+| Consentement spécifique audio (Groq) | ✅ Implémenté (panneau dédié + localStorage `audio-groq-consent`) |
+| Retrait du consentement (localStorage) | ✅ Implémenté (page Paramètres — section "Mes données") |
 | Effacement données au refus du consentement | ✅ Implémenté |
 | Suppression complète au retrait du compte | ✅ Implémenté |
-| Export des données (art. 20 RGPD) | ✅ Implémenté (API) |
-| Vérification âge mineurs | ✅ Implémenté (email parental) |
+| Export des données (art. 20 RGPD) | ✅ Implémenté (API `/api/user/export-data`) |
+| Vérification âge mineurs | ✅ Implémenté (email parental obligatoire < 15 ans) |
 | Documentation CCT sous-traitants USA | ✅ Documenté |
 | Zero analytics/tracking | ✅ Confirmé |
+| Journal des consentements horodatés | ✅ Implémenté (consent.ts — timestamp + version CONSENT_VERSION) |
 
 ---
 

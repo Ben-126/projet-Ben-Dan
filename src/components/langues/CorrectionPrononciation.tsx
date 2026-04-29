@@ -1,5 +1,7 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+
+const AUDIO_GROQ_CONSENT_KEY = "audio-groq-consent";
 
 const LANGUES = [
   { code: "en", bcp47: "en-GB", nom: "Anglais", emoji: "🔤" },
@@ -70,6 +72,25 @@ export default function CorrectionPrononciation() {
   const [erreur, setErreur] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const [consentementAudio, setConsentementAudio] = useState<"accepted" | "refused" | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(AUDIO_GROQ_CONSENT_KEY);
+    if (stored === "accepted" || stored === "refused") {
+      setConsentementAudio(stored);
+    }
+    // null = jamais donné → panneau de consentement affiché
+  }, []);
+
+  const accepterConsentementAudio = () => {
+    localStorage.setItem(AUDIO_GROQ_CONSENT_KEY, "accepted");
+    setConsentementAudio("accepted");
+  };
+
+  const refuserConsentementAudio = () => {
+    localStorage.setItem(AUDIO_GROQ_CONSENT_KEY, "refused");
+    setConsentementAudio("refused");
+  };
 
   const phrase = PHRASES[langue][phraseIndex];
 
@@ -148,6 +169,70 @@ export default function CorrectionPrononciation() {
     if (similitude >= 0.5) return "À améliorer";
     return "Difficile";
   };
+
+  // Panneau de consentement audio (RGPD — consentement spécifique requis pour envoi audio à Groq USA)
+  if (consentementAudio === null) {
+    return (
+      <div
+        className="p-5 space-y-4 rounded-xl"
+        style={{ background: "rgba(77,94,232,0.06)", border: "1px solid rgba(77,94,232,0.25)" }}
+      >
+        <p className="font-semibold text-sm" style={{ color: "var(--text)" }}>
+          Analyse de prononciation — information RGPD
+        </p>
+        <p className="text-sm" style={{ color: "var(--text2)", lineHeight: 1.6 }}>
+          Cette fonctionnalité enregistre ta voix et transmet l&apos;audio à{" "}
+          <strong>Groq Inc. (États-Unis)</strong> via le modèle Whisper pour analyse de prononciation.
+        </p>
+        <ul className="text-xs space-y-1" style={{ color: "var(--text3)" }}>
+          <li>• L&apos;audio est traité <strong>immédiatement</strong> et n&apos;est pas conservé par Groq</li>
+          <li>• Groq ne l&apos;utilise pas pour entraîner ses modèles</li>
+          <li>• Le transfert est encadré par des Clauses Contractuelles Types (CCT, art. 46 RGPD)</li>
+          <li>• Tu peux retirer ce consentement à tout moment depuis les paramètres</li>
+        </ul>
+        <div className="flex gap-3 pt-1">
+          <button
+            onClick={refuserConsentementAudio}
+            className="flex-1 py-2 text-sm font-semibold rounded-lg"
+            style={{ background: "rgba(255,255,255,0.07)", color: "var(--text2)", border: "1px solid var(--border2)" }}
+          >
+            Non merci
+          </button>
+          <button
+            onClick={accepterConsentementAudio}
+            className="flex-1 py-2 text-sm font-semibold rounded-lg"
+            style={{ background: "var(--indigo)", color: "#fff" }}
+          >
+            Accepter et continuer
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Consentement refusé — afficher alternative sans audio
+  if (consentementAudio === "refused") {
+    return (
+      <div
+        className="p-5 space-y-3 rounded-xl text-center"
+        style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)" }}
+      >
+        <p className="text-sm" style={{ color: "var(--text3)" }}>
+          L&apos;analyse de prononciation est désactivée (envoi audio vers Groq refusé).
+        </p>
+        <button
+          onClick={() => {
+            localStorage.removeItem(AUDIO_GROQ_CONSENT_KEY);
+            setConsentementAudio(null);
+          }}
+          className="text-xs underline"
+          style={{ color: "var(--indigo-l)" }}
+        >
+          Modifier mon choix
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

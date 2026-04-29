@@ -17,6 +17,12 @@ import {
 } from "@/lib/objectifs-personnalises";
 import { NIVEAUX } from "@/data/programmes";
 import { supprimerCompte } from "@/lib/auth";
+import {
+  getConsentRecord,
+  enregistrerConsentement,
+  effacerDonneesNonEssentielles,
+  type ConsentRecord,
+} from "@/lib/consent";
 import { useRouter } from "next/navigation";
 
 // Liste de toutes les matières uniques (sans doublons) de tous les niveaux
@@ -37,6 +43,7 @@ export default function ParametresPage() {
   const [erreurSuppression, setErreurSuppression] = useState<string | null>(null);
   const [sauvegarde, setSauvegarde] = useState(false);
   const timerSauvegarde = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [consentRecord, setConsentRecord] = useState<ConsentRecord | null>(null);
 
   async function handleSupprimerCompte() {
     setSuppressionEnCours(true);
@@ -63,6 +70,7 @@ export default function ParametresPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setParams(getParametres());
     rafraichirObjectifs();
+    setConsentRecord(getConsentRecord());
     setMounted(true);
     if (!("Notification" in window)) {
       setNotifStatut("non-supporte");
@@ -107,8 +115,8 @@ export default function ParametresPage() {
   };
 
   const reinitialiserProgression = () => {
-    localStorage.removeItem("quiz-performances");
-    localStorage.removeItem("quiz-history");
+    // Utilise les clés déclarées dans le module consent pour éviter la désynchronisation
+    (["quiz-performances", "quiz-history"] as const).forEach((k) => localStorage.removeItem(k));
     setConfirmEtape(0);
   };
 
@@ -439,6 +447,96 @@ export default function ParametresPage() {
                 );
               })}
             </div>
+          )}
+        </section>
+
+        {/* Consentement RGPD */}
+        <section style={sectionStyle}>
+          <h2 style={{ fontWeight: 700, color: "var(--text)" }}>🔒 Mes données et consentement</h2>
+
+          {consentRecord ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "10px 14px",
+                  borderRadius: "var(--r-md)",
+                  background: consentRecord.value === "accepted"
+                    ? "rgba(61,214,191,0.08)"
+                    : "rgba(239,110,90,0.08)",
+                  border: `1px solid ${consentRecord.value === "accepted" ? "rgba(61,214,191,0.3)" : "rgba(239,110,90,0.3)"}`,
+                }}
+              >
+                <span style={{ fontSize: 18 }}>
+                  {consentRecord.value === "accepted" ? "✅" : "⛔"}
+                </span>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+                    Stockage local :{" "}
+                    <span style={{ color: consentRecord.value === "accepted" ? "var(--teal)" : "var(--coral-l)" }}>
+                      {consentRecord.value === "accepted" ? "Accepté" : "Refusé"}
+                    </span>
+                  </p>
+                  <p style={{ fontSize: 11, color: "var(--text3)" }}>
+                    Le {new Date(consentRecord.timestamp).toLocaleDateString("fr-FR", {
+                      day: "2-digit", month: "long", year: "numeric",
+                      hour: "2-digit", minute: "2-digit",
+                    })} — politique v{consentRecord.version}
+                  </p>
+                </div>
+              </div>
+
+              <p style={{ fontSize: 12, color: "var(--text3)" }}>
+                Révioria utilise le stockage local (localStorage) de ton navigateur pour sauvegarder
+                ta progression. Aucune donnée publicitaire n&apos;est collectée.
+              </p>
+
+              {consentRecord.value === "accepted" ? (
+                <button
+                  onClick={() => {
+                    enregistrerConsentement("refused");
+                    effacerDonneesNonEssentielles();
+                    setConsentRecord(getConsentRecord());
+                  }}
+                  style={{
+                    fontSize: 13, color: "var(--coral-l)", background: "none", border: "none",
+                    cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2,
+                    padding: 0, alignSelf: "flex-start",
+                  }}
+                >
+                  Retirer mon consentement et supprimer les données locales
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    enregistrerConsentement("accepted");
+                    setConsentRecord(getConsentRecord());
+                  }}
+                  style={{
+                    fontSize: 13, color: "var(--teal)", background: "none", border: "none",
+                    cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 2,
+                    padding: 0, alignSelf: "flex-start",
+                  }}
+                >
+                  Réactiver la sauvegarde locale
+                </button>
+              )}
+
+              <a
+                href="/confidentialite"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 12, color: "var(--indigo-l)", textDecoration: "underline", alignSelf: "flex-start" }}
+              >
+                Consulter la politique de confidentialité →
+              </a>
+            </div>
+          ) : (
+            <p style={{ fontSize: 13, color: "var(--text3)", fontStyle: "italic" }}>
+              Aucun consentement enregistré. Le bandeau de consentement apparaîtra à la prochaine visite.
+            </p>
           )}
         </section>
 

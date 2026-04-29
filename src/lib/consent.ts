@@ -79,6 +79,7 @@ export const CLES_NON_ESSENTIELLES = [
   "quiz-notif-storage-key",
   "revision-espacee",
   "streak-notif-derniere-date",
+  "audio-groq-consent",   // consentement spécifique envoi audio vers Groq (USA)
 ] as const;
 
 /**
