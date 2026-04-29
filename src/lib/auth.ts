@@ -11,9 +11,21 @@ export interface ResultatAuth {
 export async function inscrire(
   email: string,
   motDePasse: string,
-  pseudo: string
+  pseudo: string,
+  emailParent?: string
 ): Promise<ResultatAuth> {
-  const { data, error } = await supabase.auth.signUp({ email, password: motDePasse });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password: motDePasse,
+    options: {
+      data: {
+        pseudo,
+        age_minor: !!emailParent,
+        ...(emailParent ? { parent_email: emailParent } : {}),
+        consent_date: new Date().toISOString(),
+      },
+    },
+  });
 
   if (error) {
     return { erreur: error.message };

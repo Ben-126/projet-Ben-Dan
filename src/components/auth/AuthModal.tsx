@@ -19,7 +19,8 @@ export default function AuthModal({ onFermer, onConnecte }: AuthModalProps) {
   const [chargement, setChargement] = useState(false);
   const [chargementGoogle, setChargementGoogle] = useState(false);
   const [voirMotDePasse, setVoirMotDePasse] = useState(false);
-  const [ageCoche, setAgeCoche] = useState(false);
+  const [ageMoinsQuinze, setAgeMoinsQuinze] = useState<boolean | null>(null);
+  const [emailParent, setEmailParent] = useState("");
 
   const handleGoogle = async () => {
     setChargementGoogle(true);
@@ -50,12 +51,18 @@ export default function AuthModal({ onFermer, onConnecte }: AuthModalProps) {
         setChargement(false);
         return;
       }
-      if (!ageCoche) {
-        setErreur("Tu dois confirmer avoir 15 ans ou plus (ou avoir l'accord d'un parent).");
+      if (ageMoinsQuinze === null) {
+        setErreur("Indique si tu as 15 ans ou plus.");
         setChargement(false);
         return;
       }
-      const { erreur: err } = await inscrire(email, motDePasse, pseudo.trim());
+      if (ageMoinsQuinze && !emailParent.trim()) {
+        setErreur("L'email de ton parent ou tuteur légal est obligatoire si tu as moins de 15 ans.");
+        setChargement(false);
+        return;
+      }
+      const parentEmailValide = ageMoinsQuinze ? emailParent.trim() : undefined;
+      const { erreur: err } = await inscrire(email, motDePasse, pseudo.trim(), parentEmailValide);
       if (err) {
         setErreur(err);
       } else {
@@ -186,21 +193,62 @@ export default function AuthModal({ onFermer, onConnecte }: AuthModalProps) {
           </div>
 
           {onglet === "inscription" && (
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={ageCoche}
-                onChange={(e) => setAgeCoche(e.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0 accent-indigo-500"
-              />
-              <span className="text-xs" style={{ color: "var(--text3)", lineHeight: 1.5 }}>
-                J&apos;ai 15 ans ou plus, ou j&apos;ai l&apos;accord d&apos;un parent ou tuteur légal.
+            <div className="space-y-3">
+              <p className="text-xs font-medium" style={{ color: "var(--text2)" }}>Ton âge (obligatoire)</p>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="age"
+                    checked={ageMoinsQuinze === false}
+                    onChange={() => { setAgeMoinsQuinze(false); setEmailParent(""); }}
+                    className="h-4 w-4 accent-indigo-500"
+                  />
+                  <span className="text-xs" style={{ color: "var(--text3)" }}>
+                    J&apos;ai <strong>15 ans ou plus</strong>
+                  </span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="age"
+                    checked={ageMoinsQuinze === true}
+                    onChange={() => setAgeMoinsQuinze(true)}
+                    className="h-4 w-4 accent-indigo-500"
+                  />
+                  <span className="text-xs" style={{ color: "var(--text3)" }}>
+                    J&apos;ai <strong>moins de 15 ans</strong>
+                  </span>
+                </label>
+              </div>
+
+              {ageMoinsQuinze === true && (
+                <div>
+                  <label className="block text-xs font-medium mb-1" style={{ color: "var(--text2)" }}>
+                    Email du parent ou tuteur légal <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={emailParent}
+                    onChange={(e) => setEmailParent(e.target.value)}
+                    placeholder="email@parent.fr"
+                    required
+                    className="w-full px-4 py-2 rounded-xl focus:outline-none text-sm"
+                    style={{ background: "rgba(255,255,255,0.05)", color: "var(--text)", border: "1px solid var(--border2)" }}
+                  />
+                  <p className="text-xs mt-1" style={{ color: "var(--text3)" }}>
+                    Requis par le RGPD (art. 8). L&apos;accord d&apos;un adulte est nécessaire pour les moins de 15 ans.
+                  </p>
+                </div>
+              )}
+
+              <p className="text-xs" style={{ color: "var(--text3)", lineHeight: 1.5 }}>
                 En créant un compte, j&apos;accepte les{" "}
                 <a href="/cgu" target="_blank" rel="noopener noreferrer" style={{ color: "var(--indigo-l)" }}>CGU</a>
                 {" "}et la{" "}
                 <a href="/confidentialite" target="_blank" rel="noopener noreferrer" style={{ color: "var(--indigo-l)" }}>politique de confidentialité</a>.
-              </span>
-            </label>
+              </p>
+            </div>
           )}
 
           {erreur && (

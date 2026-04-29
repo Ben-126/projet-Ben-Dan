@@ -111,8 +111,13 @@ export default function PageCGU() {
             <li>Des publicités non-intrusives sur les pages du service</li>
           </ul>
           <p>
-            En cas d&apos;introduction de publicités impliquant des cookies publicitaires, un nouveau
-            consentement explicite sera demandé à l&apos;utilisateur.
+            En cas d&apos;introduction de publicités ou de tout traitement de données à des fins publicitaires,
+            un nouveau <strong>consentement explicite et granulaire</strong> sera demandé à l&apos;utilisateur,
+            conformément aux articles 6 et 7 du RGPD et à la recommandation CNIL du 17 septembre 2020.
+            Aucune donnée à des fins publicitaires ne sera collectée sans ce consentement préalable.
+          </p>
+          <p className="text-gray-500 text-xs">
+            Dernière mise à jour : 29 avril 2026
           </p>
         </section>
 
